@@ -39,10 +39,10 @@ def _run_one(name: str) -> str:
     settings = get_settings()
     cmms, audit = _make_clients(settings)
     if name == "mdm-to-cmms":
-        with MdmClient(settings.mdm_db_path, settings.mdm_active_rule) as mdm:
+        with MdmClient(settings.mdm_db_path) as mdm:
             run_id = mdm_to_cmms.run(cmms, mdm, audit, settings)
     elif name == "cmms-to-mdm":
-        with MdmClient(settings.mdm_db_path, settings.mdm_active_rule) as mdm:
+        with MdmClient(settings.mdm_db_path) as mdm:
             run_id = cmms_to_mdm.run(cmms, mdm, audit, settings)
     elif name == "iot-to-cmms":
         run_id = iot_to_cmms.run(cmms, audit, settings)

@@ -37,12 +37,6 @@ class Settings:
     http_max_retries: int = field(default_factory=lambda: int(os.getenv("CMMS_HTTP_MAX_RETRIES", "6")))
     http_timeout_seconds: float = field(default_factory=lambda: float(os.getenv("CMMS_HTTP_TIMEOUT", "10")))
 
-    # MDM active-scope rule. See ARCHITECTURE_.md part A section 3 and DECISIONS.md.
-    # "conventional": date_start <= as_of and (date_end is null or date_end > as_of)
-    # "literal": date_start < as_of and (date_end is null or date_end < as_of)  -- as stated verbatim on the
-    #            clarification call; kept behind a flag pending final fixture-level confirmation.
-    mdm_active_rule: str = field(default_factory=lambda: os.getenv("MDM_ACTIVE_RULE", "conventional"))
-
     dry_run: bool = field(default_factory=lambda: _bool("SYNC_DRY_RUN", False))
 
 

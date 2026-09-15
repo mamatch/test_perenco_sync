@@ -115,7 +115,7 @@ For higher operational volumes, API actions can be queued and consumed by worker
 
 ### Active-scope rule
 
-The clarification call stated that an MDM object is active when `date_start < now()` and `date_end` is null or `< now()`. This end-date condition is counterintuitive for a conventional validity interval, so I would encode it exactly as confirmed only after one final fixture-level confirmation; otherwise the implementation should use the conventional `date_end > now()` rule. The comparison timezone must be applied consistently across all entities.
+An MDM object is active when `date_start <= now()` and `date_end` is null or `> now()`. (An earlier transcription of the clarification call had the end-date condition inverted -- `date_end < now()` -- which would have made an object active *after* its decommissioning date; this was a transcription error, confirmed and corrected, not a real ambiguity.) The comparison timezone must be applied consistently across all entities.
 
 ### Destructive-action policy
 
@@ -524,7 +524,7 @@ For the exercise sandbox, I would deliberately keep the implementation simpler a
 
 The following were confirmed after the clarification call:
 
-1. **Active MDM scope:** use the business-defined temporal rule based on `date_start`, `date_end` and a consistent timezone. The wording of the end-date condition should be represented exactly as confirmed in the final implementation and tested with boundary cases.
+1. **Active MDM scope:** `date_start <= now()` and (`date_end` is null or `date_end > now()`), consistent timezone throughout. The inverted end-date wording in an earlier transcription of the clarification call was a transcription error, now corrected -- implemented as the sole rule, with boundary cases tested.
 2. **10% archive threshold:** hard stop **for destructive/archive actions only**; non-destructive work may continue.
 3. **Active descendants:** detection is **recursive**.
 4. **CMMS → MDM:** full reconciliation, including disappeared/archived Systems and Equipments, not only upserts.
@@ -532,4 +532,4 @@ The following were confirmed after the clarification call:
 6. **Daily running hours:** select the reading with the **maximum timestamp** for the day.
 7. **Counter resets / no GOOD:** engineering decision; this design conservatively quarantines counter regressions and does not fabricate a value when no GOOD reading exists.
 
-These decisions should be copied into `DECISIONS.md` with examples and test cases. The active-date rule in particular should be verified once against the supplied fixtures because an end-date sign error would invert active/inactive semantics.
+These decisions are recorded in `DECISIONS.md` with examples and test cases.

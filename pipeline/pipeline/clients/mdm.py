@@ -40,9 +40,8 @@ class DesiredSection:
 
 
 class MdmClient:
-    def __init__(self, db_path: Path, active_rule: str = "conventional"):
+    def __init__(self, db_path: Path):
         self.db_path = db_path
-        self.active_rule = active_rule
         self._conn: sqlite3.Connection | None = None
 
     def connect(self) -> "MdmClient":
@@ -84,7 +83,7 @@ class MdmClient:
         unit_active: dict[int, bool] = {}
         unit_code: dict[int, str] = {}
         for r in rows:
-            active = is_active(_to_date(r["date_start"]), _to_date(r["date_end"]), as_of, self.active_rule)
+            active = is_active(_to_date(r["date_start"]), _to_date(r["date_end"]), as_of)
             if active and not (r["is_field"] and r["org_active"]):
                 issues.append(
                     {
@@ -114,7 +113,7 @@ class MdmClient:
             unit_id = r["system_unit_id"]
             platform_active = unit_active.get(unit_id, False)
             section_active = platform_active and is_active(
-                _to_date(r["date_start"]), _to_date(r["date_end"]), as_of, self.active_rule
+                _to_date(r["date_start"]), _to_date(r["date_end"]), as_of
             )
             sections.append(
                 DesiredSection(

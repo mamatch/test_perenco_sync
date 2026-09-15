@@ -6,20 +6,19 @@ answered by the business. Written after building and running the pipeline agains
 sandbox in `pipeline/`, so every item below is backed by an actual observation, not a
 guess -- the exact command to reproduce each one is given.
 
-## 1. MDM active-scope rule
+## 1. MDM active-scope rule -- confirmed
 
-ARCHITECTURE_.md already flags this: the clarification call stated `date_start < now()`
-and `date_end` null or `< now()`, which inverts the usual meaning of a validity window
-(an entity would stay "active" *after* its end date and only *before* its start date is
-counter-intuitive too). I implemented **both** behind a flag (`pipeline/timeutil.py:
-is_active`, `MDM_ACTIVE_RULE=conventional|literal`) and default to the conventional one
-(`date_start <= as_of and (date_end is null or date_end > as_of)`), exactly as
-ARCHITECTURE_.md says to do pending final confirmation. Boundary cases for both rules are
+ARCHITECTURE_.md flagged an apparent ambiguity: the clarification-call notes as
+transcribed said `date_start < now()` and `date_end` null or `< now()`, which inverts the
+usual meaning of a validity window. This was a transcription error, not the actual rule:
+confirmed the intended rule is the conventional one,
+
+    date_start <= as_of and (date_end is null or date_end > as_of)
+
+implemented as the sole behaviour in `pipeline/timeutil.py::is_active` (no flag -- the
+earlier `MDM_ACTIVE_RULE=conventional|literal` toggle was removed once this was settled,
+rather than keeping an option that is now known to be wrong). Boundary cases are
 unit-tested in `pipeline/tests/test_timeutil.py`.
-
-**Still open:** get the literal wording re-confirmed against a fixture where it visibly
-changes the outcome (e.g. a unit whose `date_end` is yesterday) before shipping to
-production -- a sign error here silently inverts which platforms are in scope.
 
 ## 2. `Asset/Filter` never returns `archived`
 
