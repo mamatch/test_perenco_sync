@@ -152,14 +152,22 @@ right rather than coincidentally plausible.
   meter after the physical counter replacement, per the mock's own error message and
   `docs/02_business_rules.md`.
 
-## 11. What was deliberately not built
+## 11. What was deliberately not built (and the one stretch goal that was)
 
-- **dbt / Snowflake / Airflow**: ARCHITECTURE_.md already commits to Airflow for
-  production orchestration and DuckDB-or-Snowflake for the analytical layer; building
-  either here would not add signal over the target architecture already written down, so
-  the sandbox runs as a single Python CLI (`pipeline/pipeline/cli.py`) invoking the three
-  integrations in sequence. The three task groups in ARCHITECTURE_.md's DAG sketch map
-  1:1 onto `pipeline/mdm_to_cmms.py`, `cmms_to_mdm.py`, `iot_to_cmms.py`.
+- **dbt on DuckDB** (the optional stretch, picked): `warehouse/` is a proof of concept
+  expressing `pipeline/canonical.py::compute_plan()` and the IoT daily-selection +
+  counter-regression logic as dbt models on DuckDB instead of Python -- see
+  `warehouse/README.md` for how to run it and exactly which two behaviours it
+  reproduces faithfully versus the two it deliberately simplifies (documented in the
+  models themselves, not hidden). It does **not** replace `pipeline/`, which remains
+  the actual tested, submitted Part B/C/D and the only thing that calls the CMMS/MDM
+  write APIs.
+- **Airflow**: ARCHITECTURE_.md already commits to it for production orchestration;
+  building it here would not add signal over the target architecture already written
+  down, so the sandbox runs as a single Python CLI (`pipeline/pipeline/cli.py`)
+  invoking the three integrations in sequence. The three task groups in
+  ARCHITECTURE_.md's DAG sketch map 1:1 onto `pipeline/mdm_to_cmms.py`,
+  `cmms_to_mdm.py`, `iot_to_cmms.py`.
 - **A dashboard UI**: kept to the text health summary + SQLite audit tables
   (`pipeline/pipeline/observability.py`), as the exercise explicitly allows ("a sketch of
   the dashboard you would give to operations" -- described in `pipeline/README.md` rather

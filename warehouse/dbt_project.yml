@@ -1,0 +1,18 @@
+name: perenco_warehouse
+version: "1.0.0"
+config-version: 2
+
+profile: perenco_warehouse
+
+model-paths: ["models"]
+test-paths: ["tests"]
+clean-targets: ["target", "dbt_packages"]
+
+models:
+  perenco_warehouse:
+    staging:
+      +materialized: view
+    intermediate:
+      +materialized: view
+    marts:
+      +materialized: table

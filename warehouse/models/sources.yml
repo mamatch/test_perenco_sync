@@ -1,0 +1,17 @@
+version: 2
+
+sources:
+  - name: raw
+    description: >
+      Landed by extract.py -- the only place in this project that makes an
+      HTTP call (CmmsClient, reused from ../pipeline) or opens the MDM SQLite
+      file directly (Python stdlib sqlite3, not DuckDB's sqlite_scanner
+      extension -- see the comment in extract.py for why). Everything
+      downstream of this point is SQL.
+    schema: main
+    tables:
+      - name: raw_cmms_assets
+      - name: raw_mdm_systemref_systemunit
+      - name: raw_mdm_systemref_systemunittosectionassignment
+      - name: raw_mdm_systemref_sectioncategory
+      - name: raw_mdm_orgref_orgunit

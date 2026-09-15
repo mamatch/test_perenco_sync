@@ -1,0 +1,10 @@
+[project]
+name = "perenco-warehouse"
+version = "0.1.0"
+description = "dbt-on-DuckDB proof of concept: the MDM<->CMMS delta and the IoT daily selection expressed as SQL models, per ARCHITECTURE_.md section 11"
+requires-python = ">=3.12"
+dependencies = [
+    "dbt-duckdb>=1.9",
+    "duckdb>=1.1",
+    "requests>=2.32",
+]

@@ -4,3 +4,8 @@ mdm_data/
 **/__pycache__/
 **/.pytest_cache/
 *.sqlite3
+*.duckdb
+*.duckdb.wal
+warehouse/target/
+warehouse/logs/
+warehouse/.user.yml
