@@ -1,0 +1,869 @@
+[
+  {
+    "model": "orgref.organisationalstructure",
+    "pk": 1,
+    "fields": {
+      "name": "Gabon E&P",
+      "country_code": "GA"
+    }
+  },
+  {
+    "model": "orgref.organisationalstructure",
+    "pk": 2,
+    "fields": {
+      "name": "Congo E&P",
+      "country_code": "CG"
+    }
+  },
+  {
+    "model": "orgref.organisationalstructure",
+    "pk": 3,
+    "fields": {
+      "name": "UK E&P",
+      "country_code": "GB"
+    }
+  },
+  {
+    "model": "orgref.organisationalstructure",
+    "pk": 4,
+    "fields": {
+      "name": "Cameroon E&P",
+      "country_code": "CM"
+    }
+  },
+  {
+    "model": "orgref.organisationalstructure",
+    "pk": 5,
+    "fields": {
+      "name": "Head Office",
+      "country_code": "FR"
+    }
+  },
+  {
+    "model": "orgref.orgunit",
+    "pk": 1,
+    "fields": {
+      "name": "Gabon Onshore Operations",
+      "organisational_structure": 1,
+      "is_field": true,
+      "is_active": true
+    }
+  },
+  {
+    "model": "orgref.orgunit",
+    "pk": 2,
+    "fields": {
+      "name": "Gabon Offshore Operations",
+      "organisational_structure": 1,
+      "is_field": true,
+      "is_active": true
+    }
+  },
+  {
+    "model": "orgref.orgunit",
+    "pk": 3,
+    "fields": {
+      "name": "Congo Offshore",
+      "organisational_structure": 2,
+      "is_field": true,
+      "is_active": true
+    }
+  },
+  {
+    "model": "orgref.orgunit",
+    "pk": 4,
+    "fields": {
+      "name": "UK Southern North Sea",
+      "organisational_structure": 3,
+      "is_field": true,
+      "is_active": true
+    }
+  },
+  {
+    "model": "orgref.orgunit",
+    "pk": 5,
+    "fields": {
+      "name": "Cameroon Rio del Rey",
+      "organisational_structure": 4,
+      "is_field": true,
+      "is_active": true
+    }
+  },
+  {
+    "model": "orgref.orgunit",
+    "pk": 6,
+    "fields": {
+      "name": "Paris Head Office",
+      "organisational_structure": 5,
+      "is_field": false,
+      "is_active": true
+    }
+  },
+  {
+    "model": "orgref.orgunit",
+    "pk": 7,
+    "fields": {
+      "name": "Gabon Legacy Camp",
+      "organisational_structure": 1,
+      "is_field": true,
+      "is_active": false
+    }
+  },
+  {
+    "model": "systemref.systemunit",
+    "pk": 1,
+    "fields": {
+      "code": "OLW",
+      "name": "Obangue",
+      "org_unit": 1,
+      "date_start": "1998-05-01",
+      "date_end": null,
+      "source": "MDM"
+    }
+  },
+  {
+    "model": "systemref.systemunit",
+    "pk": 2,
+    "fields": {
+      "code": "JNR",
+      "name": "Tchatamba",
+      "org_unit": 2,
+      "date_start": "1997-09-01",
+      "date_end": null,
+      "source": "MDM"
+    }
+  },
+  {
+    "model": "systemref.systemunit",
+    "pk": 3,
+    "fields": {
+      "code": "MBK",
+      "name": "Emeraude",
+      "org_unit": 3,
+      "date_start": "1972-03-15",
+      "date_end": null,
+      "source": "MDM"
+    }
+  },
+  {
+    "model": "systemref.systemunit",
+    "pk": 4,
+    "fields": {
+      "code": "MPG",
+      "name": "Yombo",
+      "org_unit": 3,
+      "date_start": "1991-06-01",
+      "date_end": null,
+      "source": "MDM"
+    }
+  },
+  {
+    "model": "systemref.systemunit",
+    "pk": 5,
+    "fields": {
+      "code": "OGD",
+      "name": "Babbage",
+      "org_unit": 4,
+      "date_start": "2010-08-01",
+      "date_end": null,
+      "source": "MDM"
+    }
+  },
+  {
+    "model": "systemref.systemunit",
+    "pk": 6,
+    "fields": {
+      "code": "LQ-OLW",
+      "name": "Obangue Living Quarters",
+      "org_unit": 1,
+      "date_start": "2005-02-01",
+      "date_end": null,
+      "source": "MDM"
+    }
+  },
+  {
+    "model": "systemref.systemunit",
+    "pk": 7,
+    "fields": {
+      "code": "OLW-OLD",
+      "name": "Obangue Old Camp",
+      "org_unit": 1,
+      "date_start": "1998-05-01",
+      "date_end": "2025-06-30",
+      "source": "MDM"
+    }
+  },
+  {
+    "model": "systemref.systemunit",
+    "pk": 8,
+    "fields": {
+      "code": "TRW",
+      "name": "M'Boya Nord",
+      "org_unit": 1,
+      "date_start": "2015-04-01",
+      "date_end": null,
+      "source": "MDM"
+    }
+  },
+  {
+    "model": "systemref.sectioncategory",
+    "pk": 1,
+    "fields": {
+      "code": "PROD",
+      "name": "Production"
+    }
+  },
+  {
+    "model": "systemref.sectioncategory",
+    "pk": 2,
+    "fields": {
+      "code": "UTIL",
+      "name": "Utilities"
+    }
+  },
+  {
+    "model": "systemref.sectioncategory",
+    "pk": 3,
+    "fields": {
+      "code": "SAFE",
+      "name": "Safety systems"
+    }
+  },
+  {
+    "model": "systemref.sectioncategory",
+    "pk": 4,
+    "fields": {
+      "code": "ELEC",
+      "name": "Electrical"
+    }
+  },
+  {
+    "model": "systemref.sectioncategory",
+    "pk": 5,
+    "fields": {
+      "code": "DRIL",
+      "name": "Drilling"
+    }
+  },
+  {
+    "model": "systemref.sectioncategory",
+    "pk": 6,
+    "fields": {
+      "code": "MAR",
+      "name": "Marine"
+    }
+  },
+  {
+    "model": "systemref.sectioncategory",
+    "pk": 7,
+    "fields": {
+      "code": "ACC",
+      "name": "Accommodation"
+    }
+  },
+  {
+    "model": "systemref.systemunittosectionassignment",
+    "pk": 1,
+    "fields": {
+      "system_unit": 1,
+      "section_category": 1,
+      "date_start": "2024-01-01",
+      "date_end": null
+    }
+  },
+  {
+    "model": "systemref.systemunittosectionassignment",
+    "pk": 2,
+    "fields": {
+      "system_unit": 1,
+      "section_category": 2,
+      "date_start": "2024-01-01",
+      "date_end": null
+    }
+  },
+  {
+    "model": "systemref.systemunittosectionassignment",
+    "pk": 3,
+    "fields": {
+      "system_unit": 1,
+      "section_category": 3,
+      "date_start": "2024-01-01",
+      "date_end": null
+    }
+  },
+  {
+    "model": "systemref.systemunittosectionassignment",
+    "pk": 4,
+    "fields": {
+      "system_unit": 2,
+      "section_category": 1,
+      "date_start": "2024-01-01",
+      "date_end": null
+    }
+  },
+  {
+    "model": "systemref.systemunittosectionassignment",
+    "pk": 5,
+    "fields": {
+      "system_unit": 2,
+      "section_category": 2,
+      "date_start": "2024-01-01",
+      "date_end": null
+    }
+  },
+  {
+    "model": "systemref.systemunittosectionassignment",
+    "pk": 6,
+    "fields": {
+      "system_unit": 2,
+      "section_category": 3,
+      "date_start": "2024-01-01",
+      "date_end": null
+    }
+  },
+  {
+    "model": "systemref.systemunittosectionassignment",
+    "pk": 7,
+    "fields": {
+      "system_unit": 2,
+      "section_category": 4,
+      "date_start": "2026-07-01",
+      "date_end": null
+    }
+  },
+  {
+    "model": "systemref.systemunittosectionassignment",
+    "pk": 8,
+    "fields": {
+      "system_unit": 3,
+      "section_category": 1,
+      "date_start": "2024-01-01",
+      "date_end": null
+    }
+  },
+  {
+    "model": "systemref.systemunittosectionassignment",
+    "pk": 9,
+    "fields": {
+      "system_unit": 3,
+      "section_category": 3,
+      "date_start": "2024-01-01",
+      "date_end": null
+    }
+  },
+  {
+    "model": "systemref.systemunittosectionassignment",
+    "pk": 10,
+    "fields": {
+      "system_unit": 3,
+      "section_category": 2,
+      "date_start": "2024-01-01",
+      "date_end": "2025-03-31"
+    }
+  },
+  {
+    "model": "systemref.systemunittosectionassignment",
+    "pk": 11,
+    "fields": {
+      "system_unit": 4,
+      "section_category": 1,
+      "date_start": "2026-08-15",
+      "date_end": null
+    }
+  },
+  {
+    "model": "systemref.systemunittosectionassignment",
+    "pk": 12,
+    "fields": {
+      "system_unit": 4,
+      "section_category": 2,
+      "date_start": "2026-08-15",
+      "date_end": null
+    }
+  },
+  {
+    "model": "systemref.systemunittosectionassignment",
+    "pk": 13,
+    "fields": {
+      "system_unit": 5,
+      "section_category": 1,
+      "date_start": "2024-01-01",
+      "date_end": null
+    }
+  },
+  {
+    "model": "systemref.systemunittosectionassignment",
+    "pk": 14,
+    "fields": {
+      "system_unit": 5,
+      "section_category": 2,
+      "date_start": "2024-01-01",
+      "date_end": null
+    }
+  },
+  {
+    "model": "systemref.systemunittosectionassignment",
+    "pk": 15,
+    "fields": {
+      "system_unit": 5,
+      "section_category": 3,
+      "date_start": "2024-01-01",
+      "date_end": null
+    }
+  },
+  {
+    "model": "systemref.systemunittosectionassignment",
+    "pk": 16,
+    "fields": {
+      "system_unit": 6,
+      "section_category": 7,
+      "date_start": "2024-01-01",
+      "date_end": null
+    }
+  },
+  {
+    "model": "systemref.systemunittosectionassignment",
+    "pk": 17,
+    "fields": {
+      "system_unit": 7,
+      "section_category": 1,
+      "date_start": "2024-01-01",
+      "date_end": null
+    }
+  },
+  {
+    "model": "systemref.systemunittosectionassignment",
+    "pk": 18,
+    "fields": {
+      "system_unit": 8,
+      "section_category": 1,
+      "date_start": "2026-09-01",
+      "date_end": null
+    }
+  },
+  {
+    "model": "systemref.systemclass",
+    "pk": 1,
+    "fields": {
+      "code": "GC",
+      "name": "Gas compression"
+    }
+  },
+  {
+    "model": "systemref.systemclass",
+    "pk": 2,
+    "fields": {
+      "code": "OS",
+      "name": "Oil separation"
+    }
+  },
+  {
+    "model": "systemref.systemclass",
+    "pk": 3,
+    "fields": {
+      "code": "WI",
+      "name": "Water injection"
+    }
+  },
+  {
+    "model": "systemref.systemclass",
+    "pk": 4,
+    "fields": {
+      "code": "PG",
+      "name": "Power generation"
+    }
+  },
+  {
+    "model": "systemref.systemclass",
+    "pk": 5,
+    "fields": {
+      "code": "FW",
+      "name": "Fire water"
+    }
+  },
+  {
+    "model": "systemref.systemclass",
+    "pk": 6,
+    "fields": {
+      "code": "ESD",
+      "name": "Emergency shutdown"
+    }
+  },
+  {
+    "model": "systemref.systemclass",
+    "pk": 7,
+    "fields": {
+      "code": "CR",
+      "name": "Lifting and cranes"
+    }
+  },
+  {
+    "model": "systemref.systemclass",
+    "pk": 8,
+    "fields": {
+      "code": "HV",
+      "name": "HVAC"
+    }
+  },
+  {
+    "model": "systemref.systemclass",
+    "pk": 9,
+    "fields": {
+      "code": "EX",
+      "name": "Export and metering"
+    }
+  },
+  {
+    "model": "systemref.systemattribute",
+    "pk": 1,
+    "fields": {
+      "name": "SCE"
+    }
+  },
+  {
+    "model": "systemref.systemattribute",
+    "pk": 2,
+    "fields": {
+      "name": "Production critical"
+    }
+  },
+  {
+    "model": "systemref.system",
+    "pk": 1,
+    "fields": {
+      "code": "SYS_OLW_001",
+      "tag": "Obangue gas compression train A (old label)",
+      "system_class": 1,
+      "system_unit": 1,
+      "section": 1,
+      "source": "GLOBAL",
+      "date_start": "1998-05-01",
+      "date_end": null
+    }
+  },
+  {
+    "model": "systemref.systemattributeassignment",
+    "pk": 1,
+    "fields": {
+      "system": 1,
+      "system_attribute": 1
+    }
+  },
+  {
+    "model": "systemref.system",
+    "pk": 2,
+    "fields": {
+      "code": "SYS_OLW_002",
+      "tag": "Obangue oil separation",
+      "system_class": 2,
+      "system_unit": 1,
+      "section": 1,
+      "source": "GLOBAL",
+      "date_start": "1998-05-01",
+      "date_end": null
+    }
+  },
+  {
+    "model": "systemref.systemattributeassignment",
+    "pk": 2,
+    "fields": {
+      "system": 2,
+      "system_attribute": 2
+    }
+  },
+  {
+    "model": "systemref.system",
+    "pk": 3,
+    "fields": {
+      "code": "SYS_OLW_099",
+      "tag": "Obangue temporary test system",
+      "system_class": 4,
+      "system_unit": 1,
+      "section": 2,
+      "source": "GLOBAL",
+      "date_start": "2025-01-01",
+      "date_end": null
+    }
+  },
+  {
+    "model": "systemref.equipmenttype",
+    "pk": 1,
+    "fields": {
+      "code": "PU_CE",
+      "name": "Pump - Centrifugal",
+      "sce": false
+    }
+  },
+  {
+    "model": "systemref.equipmenttype",
+    "pk": 2,
+    "fields": {
+      "code": "PU_RE",
+      "name": "Pump - Reciprocating",
+      "sce": false
+    }
+  },
+  {
+    "model": "systemref.equipmenttype",
+    "pk": 3,
+    "fields": {
+      "code": "PU_RO",
+      "name": "Pump - Rotary",
+      "sce": false
+    }
+  },
+  {
+    "model": "systemref.equipmenttype",
+    "pk": 4,
+    "fields": {
+      "code": "CO_CE",
+      "name": "Compressor - Centrifugal",
+      "sce": false
+    }
+  },
+  {
+    "model": "systemref.equipmenttype",
+    "pk": 5,
+    "fields": {
+      "code": "CO_RE",
+      "name": "Compressor - Reciprocating",
+      "sce": false
+    }
+  },
+  {
+    "model": "systemref.equipmenttype",
+    "pk": 6,
+    "fields": {
+      "code": "EG_MD",
+      "name": "Electric generator - Motor driven",
+      "sce": false
+    }
+  },
+  {
+    "model": "systemref.equipmenttype",
+    "pk": 7,
+    "fields": {
+      "code": "EG_TD",
+      "name": "Electric generator - Turbine driven",
+      "sce": false
+    }
+  },
+  {
+    "model": "systemref.equipmenttype",
+    "pk": 8,
+    "fields": {
+      "code": "EG_DD",
+      "name": "Electric generator - Diesel driven",
+      "sce": false
+    }
+  },
+  {
+    "model": "systemref.equipmenttype",
+    "pk": 9,
+    "fields": {
+      "code": "VE_SE",
+      "name": "Vessel - Separator",
+      "sce": false
+    }
+  },
+  {
+    "model": "systemref.equipmenttype",
+    "pk": 10,
+    "fields": {
+      "code": "VE_SC",
+      "name": "Vessel - Scrubber",
+      "sce": false
+    }
+  },
+  {
+    "model": "systemref.equipmenttype",
+    "pk": 11,
+    "fields": {
+      "code": "VA_XV",
+      "name": "Valve - Shutdown valve",
+      "sce": true
+    }
+  },
+  {
+    "model": "systemref.equipmenttype",
+    "pk": 12,
+    "fields": {
+      "code": "VA_PSV",
+      "name": "Valve - Pressure safety valve",
+      "sce": true
+    }
+  },
+  {
+    "model": "systemref.equipmenttype",
+    "pk": 13,
+    "fields": {
+      "code": "TU_GT",
+      "name": "Turbine - Gas turbine",
+      "sce": false
+    }
+  },
+  {
+    "model": "systemref.equipmenttype",
+    "pk": 14,
+    "fields": {
+      "code": "HE_ST",
+      "name": "Heat exchanger - Shell and tube",
+      "sce": false
+    }
+  },
+  {
+    "model": "systemref.equipmenttype",
+    "pk": 15,
+    "fields": {
+      "code": "FD_GD",
+      "name": "Fire and gas detector - Gas detector",
+      "sce": true
+    }
+  },
+  {
+    "model": "systemref.equipmenttype",
+    "pk": 16,
+    "fields": {
+      "code": "FD_FD",
+      "name": "Fire and gas detector - Flame detector",
+      "sce": true
+    }
+  },
+  {
+    "model": "systemref.equipment",
+    "pk": 1,
+    "fields": {
+      "code": "OLW-K-101A",
+      "name": "Compressor train A - 1st stage",
+      "equipment_type": 4,
+      "date_start": "1998-05-01",
+      "date_end": null
+    }
+  },
+  {
+    "model": "systemref.systemequipmentassignment",
+    "pk": 1,
+    "fields": {
+      "system": 1,
+      "equipment": 1,
+      "assignment_date": "1998-05-01"
+    }
+  },
+  {
+    "model": "systemref.equipment",
+    "pk": 2,
+    "fields": {
+      "code": "OLW-K-101B",
+      "name": "Compressor train A - 2nd stage",
+      "equipment_type": 4,
+      "date_start": "1998-05-01",
+      "date_end": null
+    }
+  },
+  {
+    "model": "systemref.systemequipmentassignment",
+    "pk": 2,
+    "fields": {
+      "system": 1,
+      "equipment": 2,
+      "assignment_date": "1998-05-01"
+    }
+  },
+  {
+    "model": "systemref.equipment",
+    "pk": 3,
+    "fields": {
+      "code": "OLW-V-201",
+      "name": "HP separator",
+      "equipment_type": 9,
+      "date_start": "1998-05-01",
+      "date_end": null
+    }
+  },
+  {
+    "model": "systemref.systemequipmentassignment",
+    "pk": 3,
+    "fields": {
+      "system": 2,
+      "equipment": 3,
+      "assignment_date": "1998-05-01"
+    }
+  },
+  {
+    "model": "systemref.equipment",
+    "pk": 4,
+    "fields": {
+      "code": "OLW-P-301A",
+      "name": "Water injection pump A",
+      "equipment_type": 1,
+      "date_start": "2002-03-01",
+      "date_end": null
+    }
+  },
+  {
+    "model": "systemref.equipment",
+    "pk": 5,
+    "fields": {
+      "code": "OLW-P-301B",
+      "name": "Water injection pump B",
+      "equipment_type": 1,
+      "date_start": "2002-03-01",
+      "date_end": null
+    }
+  },
+  {
+    "model": "systemref.equipment",
+    "pk": 6,
+    "fields": {
+      "code": "JNR-G-401",
+      "name": "Gas turbine generator A",
+      "equipment_type": 13,
+      "date_start": "1997-09-01",
+      "date_end": null
+    }
+  },
+  {
+    "model": "systemref.equipment",
+    "pk": 7,
+    "fields": {
+      "code": "JNR-G-402",
+      "name": "Gas turbine generator B",
+      "equipment_type": 13,
+      "date_start": "1997-09-01",
+      "date_end": null
+    }
+  },
+  {
+    "model": "systemref.equipment",
+    "pk": 8,
+    "fields": {
+      "code": "JNR-K-101",
+      "name": "Gas compressor",
+      "equipment_type": 4,
+      "date_start": "1997-09-01",
+      "date_end": null
+    }
+  },
+  {
+    "model": "systemref.equipment",
+    "pk": 9,
+    "fields": {
+      "code": "MBK-P-101",
+      "name": "Export pump",
+      "equipment_type": 1,
+      "date_start": "1980-01-01",
+      "date_end": null
+    }
+  },
+  {
+    "model": "systemref.equipment",
+    "pk": 10,
+    "fields": {
+      "code": "OLW-P-999",
+      "name": "Decommissioned booster pump",
+      "equipment_type": 1,
+      "date_start": "2005-01-01",
+      "date_end": null
+    }
+  }
+]

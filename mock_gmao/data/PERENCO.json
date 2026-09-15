@@ -1,0 +1,2118 @@
+{
+  "tenant": "PERENCO",
+  "apiKey": "demo-key-global",
+  "bodies": [
+    {
+      "bodyName": "Gabon Onshore Operations",
+      "archived": false,
+      "interfaceKey": null,
+      "lastModificationDateTime": "2024-01-10T08:00:00Z"
+    },
+    {
+      "bodyName": "Gabon Offshore Operations",
+      "archived": false,
+      "interfaceKey": null,
+      "lastModificationDateTime": "2024-01-10T08:00:00Z"
+    },
+    {
+      "bodyName": "Congo Offshore",
+      "archived": false,
+      "interfaceKey": null,
+      "lastModificationDateTime": "2024-01-10T08:00:00Z"
+    },
+    {
+      "bodyName": "UK Southern North Sea",
+      "archived": false,
+      "interfaceKey": null,
+      "lastModificationDateTime": "2024-01-10T08:00:00Z"
+    },
+    {
+      "bodyName": "Pointe-Noire Warehouse",
+      "archived": false,
+      "interfaceKey": null,
+      "lastModificationDateTime": "2025-11-02T14:22:00Z"
+    },
+    {
+      "bodyName": "Muanda Legacy",
+      "archived": true,
+      "interfaceKey": null,
+      "lastModificationDateTime": "2023-05-01T09:00:00Z"
+    }
+  ],
+  "families": [
+    {
+      "code": "PLATFORM",
+      "name": "Platform"
+    },
+    {
+      "code": "SECTION",
+      "name": "Section"
+    },
+    {
+      "code": "LOC_TAG",
+      "name": "Location tag"
+    },
+    {
+      "code": "SYS_GC",
+      "name": "System - Gas compression"
+    },
+    {
+      "code": "SYS_OS",
+      "name": "System - Oil separation"
+    },
+    {
+      "code": "SYS_WI",
+      "name": "System - Water injection"
+    },
+    {
+      "code": "SYS_PG",
+      "name": "System - Power generation"
+    },
+    {
+      "code": "SYS_FW",
+      "name": "System - Fire water"
+    },
+    {
+      "code": "SYS_ESD",
+      "name": "System - Emergency shutdown"
+    },
+    {
+      "code": "SYS_CR",
+      "name": "System - Lifting and cranes"
+    },
+    {
+      "code": "SYS_HV",
+      "name": "System - HVAC"
+    },
+    {
+      "code": "SYS_EX",
+      "name": "System - Export and metering"
+    },
+    {
+      "code": "PU_CE",
+      "name": "Pump - Centrifugal"
+    },
+    {
+      "code": "PU_RE",
+      "name": "Pump - Reciprocating"
+    },
+    {
+      "code": "PU_RO",
+      "name": "Pump - Rotary"
+    },
+    {
+      "code": "CO_CE",
+      "name": "Compressor - Centrifugal"
+    },
+    {
+      "code": "CO_RE",
+      "name": "Compressor - Reciprocating"
+    },
+    {
+      "code": "EG_MD",
+      "name": "Electric generator - Motor driven"
+    },
+    {
+      "code": "EG_TD",
+      "name": "Electric generator - Turbine driven"
+    },
+    {
+      "code": "EG_DD",
+      "name": "Electric generator - Diesel driven"
+    },
+    {
+      "code": "VE_SE",
+      "name": "Vessel - Separator"
+    },
+    {
+      "code": "VE_SC",
+      "name": "Vessel - Scrubber"
+    },
+    {
+      "code": "VA_XV",
+      "name": "Valve - Shutdown valve"
+    },
+    {
+      "code": "VA_PSV",
+      "name": "Valve - Pressure safety valve"
+    },
+    {
+      "code": "TU_GT",
+      "name": "Turbine - Gas turbine"
+    },
+    {
+      "code": "HE_ST",
+      "name": "Heat exchanger - Shell and tube"
+    },
+    {
+      "code": "FD_GD",
+      "name": "Fire and gas detector - Gas detector"
+    },
+    {
+      "code": "FD_FD",
+      "name": "Fire and gas detector - Flame detector"
+    },
+    {
+      "code": "PU_SC",
+      "name": "Pump - Screw"
+    },
+    {
+      "code": "PU",
+      "name": "Pump"
+    },
+    {
+      "code": "XX_ZZ",
+      "name": "Unknown - Unknown"
+    }
+  ],
+  "scenarioTargets": {
+    "new_system_code": "SYS_OLW_010",
+    "new_system_parent": "OLW_UTIL",
+    "new_equipment_code": "OLW-P-602",
+    "system_to_archive": "SYS_OLW_003",
+    "section_to_rename": "OLW_UTIL"
+  },
+  "assets": [
+    {
+      "code": "OLW",
+      "name": "Obangue",
+      "interfaceKey": null,
+      "parentCode": null,
+      "familyCode": "PLATFORM",
+      "familyName": "Platform",
+      "bodies": [
+        "Gabon Onshore Operations"
+      ],
+      "archived": false,
+      "criticality": null,
+      "state": {
+        "name": "1 - Disponible - Normal",
+        "servicing": true
+      },
+      "node": true,
+      "inServiceDate": "1998-05-01T00:00:00Z",
+      "sharedData": false,
+      "lastModificationDateTime": "2026-08-30T22:00:00Z",
+      "meters": []
+    },
+    {
+      "code": "JNR",
+      "name": "TCHATAMBA (old label)",
+      "interfaceKey": null,
+      "parentCode": null,
+      "familyCode": "PLATFORM",
+      "familyName": "Platform",
+      "bodies": [
+        "Gabon Offshore Operations"
+      ],
+      "archived": false,
+      "criticality": null,
+      "state": {
+        "name": "1 - Disponible - Normal",
+        "servicing": true
+      },
+      "node": true,
+      "inServiceDate": "1997-09-01T00:00:00Z",
+      "sharedData": false,
+      "lastModificationDateTime": "2026-08-30T22:00:00Z",
+      "meters": []
+    },
+    {
+      "code": "MBK",
+      "name": "Emeraude",
+      "interfaceKey": null,
+      "parentCode": null,
+      "familyCode": "PLATFORM",
+      "familyName": "Platform",
+      "bodies": [
+        "Congo Offshore"
+      ],
+      "archived": false,
+      "criticality": null,
+      "state": {
+        "name": "1 - Disponible - Normal",
+        "servicing": true
+      },
+      "node": true,
+      "inServiceDate": "1972-03-15T00:00:00Z",
+      "sharedData": false,
+      "lastModificationDateTime": "2026-08-30T22:00:00Z",
+      "meters": []
+    },
+    {
+      "code": "OGD",
+      "name": "Babbage",
+      "interfaceKey": null,
+      "parentCode": null,
+      "familyCode": "PLATFORM",
+      "familyName": "Platform",
+      "bodies": [
+        "UK Southern North Sea"
+      ],
+      "archived": false,
+      "criticality": null,
+      "state": {
+        "name": "1 - Disponible - Normal",
+        "servicing": true
+      },
+      "node": true,
+      "inServiceDate": "2010-08-01T00:00:00Z",
+      "sharedData": false,
+      "lastModificationDateTime": "2026-08-30T22:00:00Z",
+      "meters": []
+    },
+    {
+      "code": "LQ-OLW",
+      "name": "Obangue Living Quarters",
+      "interfaceKey": null,
+      "parentCode": null,
+      "familyCode": "PLATFORM",
+      "familyName": "Platform",
+      "bodies": [
+        "Gabon Onshore Operations"
+      ],
+      "archived": false,
+      "criticality": null,
+      "state": {
+        "name": "1 - Disponible - Normal",
+        "servicing": true
+      },
+      "node": true,
+      "inServiceDate": "2005-02-01T00:00:00Z",
+      "sharedData": false,
+      "lastModificationDateTime": "2026-08-30T22:00:00Z",
+      "meters": []
+    },
+    {
+      "code": "OLW-OLD",
+      "name": "Obangue Old Camp",
+      "interfaceKey": null,
+      "parentCode": null,
+      "familyCode": "PLATFORM",
+      "familyName": "Platform",
+      "bodies": [
+        "Gabon Onshore Operations"
+      ],
+      "archived": false,
+      "criticality": null,
+      "state": {
+        "name": "1 - Disponible - Normal",
+        "servicing": true
+      },
+      "node": true,
+      "inServiceDate": "1998-05-01T00:00:00Z",
+      "sharedData": false,
+      "lastModificationDateTime": "2026-08-30T22:00:00Z",
+      "meters": []
+    },
+    {
+      "code": "RBD",
+      "name": "Legacy test platform",
+      "interfaceKey": null,
+      "parentCode": null,
+      "familyCode": "PLATFORM",
+      "familyName": "Platform",
+      "bodies": [
+        "Gabon Onshore Operations"
+      ],
+      "archived": false,
+      "criticality": null,
+      "state": {
+        "name": "1 - Disponible - Normal",
+        "servicing": true
+      },
+      "node": true,
+      "inServiceDate": "2020-01-01T00:00:00Z",
+      "sharedData": false,
+      "lastModificationDateTime": "2026-08-30T22:00:00Z",
+      "meters": []
+    },
+    {
+      "code": "SNL",
+      "name": "Anchor (decommissioned 2019)",
+      "interfaceKey": null,
+      "parentCode": null,
+      "familyCode": "PLATFORM",
+      "familyName": "Platform",
+      "bodies": [
+        "Congo Offshore"
+      ],
+      "archived": true,
+      "criticality": null,
+      "state": {
+        "name": "1 - Disponible - Normal",
+        "servicing": true
+      },
+      "node": true,
+      "inServiceDate": "1980-01-01T00:00:00Z",
+      "sharedData": false,
+      "lastModificationDateTime": "2026-08-30T22:00:00Z",
+      "meters": []
+    },
+    {
+      "code": "OLW_PROD",
+      "name": "Production",
+      "interfaceKey": null,
+      "parentCode": "OLW",
+      "familyCode": "SECTION",
+      "familyName": "Section",
+      "bodies": [
+        "Gabon Onshore Operations"
+      ],
+      "archived": false,
+      "criticality": null,
+      "state": {
+        "name": "1 - Disponible - Normal",
+        "servicing": true
+      },
+      "node": true,
+      "inServiceDate": null,
+      "sharedData": false,
+      "lastModificationDateTime": "2026-08-30T22:00:00Z",
+      "meters": []
+    },
+    {
+      "code": "OLW_UTIL",
+      "name": "Utilities",
+      "interfaceKey": null,
+      "parentCode": "OLW",
+      "familyCode": "SECTION",
+      "familyName": "Section",
+      "bodies": [
+        "Gabon Onshore Operations"
+      ],
+      "archived": false,
+      "criticality": null,
+      "state": {
+        "name": "1 - Disponible - Normal",
+        "servicing": true
+      },
+      "node": true,
+      "inServiceDate": null,
+      "sharedData": false,
+      "lastModificationDateTime": "2026-08-30T22:00:00Z",
+      "meters": []
+    },
+    {
+      "code": "OLW_SAFE",
+      "name": "Safety systems",
+      "interfaceKey": null,
+      "parentCode": "OLW",
+      "familyCode": "SECTION",
+      "familyName": "Section",
+      "bodies": [
+        "Gabon Onshore Operations"
+      ],
+      "archived": false,
+      "criticality": null,
+      "state": {
+        "name": "1 - Disponible - Normal",
+        "servicing": true
+      },
+      "node": true,
+      "inServiceDate": null,
+      "sharedData": false,
+      "lastModificationDateTime": "2026-08-30T22:00:00Z",
+      "meters": []
+    },
+    {
+      "code": "JNR_PROD",
+      "name": "Production",
+      "interfaceKey": null,
+      "parentCode": "JNR",
+      "familyCode": "SECTION",
+      "familyName": "Section",
+      "bodies": [
+        "Gabon Offshore Operations"
+      ],
+      "archived": false,
+      "criticality": null,
+      "state": {
+        "name": "1 - Disponible - Normal",
+        "servicing": true
+      },
+      "node": true,
+      "inServiceDate": null,
+      "sharedData": false,
+      "lastModificationDateTime": "2026-08-30T22:00:00Z",
+      "meters": []
+    },
+    {
+      "code": "JNR_UTIL",
+      "name": "Utilities",
+      "interfaceKey": null,
+      "parentCode": "JNR",
+      "familyCode": "SECTION",
+      "familyName": "Section",
+      "bodies": [
+        "Gabon Offshore Operations"
+      ],
+      "archived": false,
+      "criticality": null,
+      "state": {
+        "name": "1 - Disponible - Normal",
+        "servicing": true
+      },
+      "node": true,
+      "inServiceDate": null,
+      "sharedData": false,
+      "lastModificationDateTime": "2026-08-30T22:00:00Z",
+      "meters": []
+    },
+    {
+      "code": "JNR_SAFE",
+      "name": "Safety systems",
+      "interfaceKey": null,
+      "parentCode": "JNR",
+      "familyCode": "SECTION",
+      "familyName": "Section",
+      "bodies": [
+        "Gabon Offshore Operations"
+      ],
+      "archived": false,
+      "criticality": null,
+      "state": {
+        "name": "1 - Disponible - Normal",
+        "servicing": true
+      },
+      "node": true,
+      "inServiceDate": null,
+      "sharedData": false,
+      "lastModificationDateTime": "2026-08-30T22:00:00Z",
+      "meters": []
+    },
+    {
+      "code": "MBK_PROD",
+      "name": "Production",
+      "interfaceKey": null,
+      "parentCode": "MBK",
+      "familyCode": "SECTION",
+      "familyName": "Section",
+      "bodies": [
+        "Congo Offshore"
+      ],
+      "archived": false,
+      "criticality": null,
+      "state": {
+        "name": "1 - Disponible - Normal",
+        "servicing": true
+      },
+      "node": true,
+      "inServiceDate": null,
+      "sharedData": false,
+      "lastModificationDateTime": "2026-08-30T22:00:00Z",
+      "meters": []
+    },
+    {
+      "code": "MBK_SAFE",
+      "name": "Safety systems",
+      "interfaceKey": null,
+      "parentCode": "MBK",
+      "familyCode": "SECTION",
+      "familyName": "Section",
+      "bodies": [
+        "Congo Offshore"
+      ],
+      "archived": false,
+      "criticality": null,
+      "state": {
+        "name": "1 - Disponible - Normal",
+        "servicing": true
+      },
+      "node": true,
+      "inServiceDate": null,
+      "sharedData": false,
+      "lastModificationDateTime": "2026-08-30T22:00:00Z",
+      "meters": []
+    },
+    {
+      "code": "MBK_UTIL",
+      "name": "Utilities",
+      "interfaceKey": null,
+      "parentCode": "MBK",
+      "familyCode": "SECTION",
+      "familyName": "Section",
+      "bodies": [
+        "Congo Offshore"
+      ],
+      "archived": false,
+      "criticality": null,
+      "state": {
+        "name": "1 - Disponible - Normal",
+        "servicing": true
+      },
+      "node": true,
+      "inServiceDate": null,
+      "sharedData": false,
+      "lastModificationDateTime": "2026-08-30T22:00:00Z",
+      "meters": []
+    },
+    {
+      "code": "MBK_MAR",
+      "name": "Marine",
+      "interfaceKey": null,
+      "parentCode": "MBK",
+      "familyCode": "SECTION",
+      "familyName": "Section",
+      "bodies": [
+        "Congo Offshore"
+      ],
+      "archived": false,
+      "criticality": null,
+      "state": {
+        "name": "1 - Disponible - Normal",
+        "servicing": true
+      },
+      "node": true,
+      "inServiceDate": null,
+      "sharedData": false,
+      "lastModificationDateTime": "2026-08-30T22:00:00Z",
+      "meters": []
+    },
+    {
+      "code": "MBK_ACC",
+      "name": "Accommodation",
+      "interfaceKey": null,
+      "parentCode": "MBK",
+      "familyCode": "SECTION",
+      "familyName": "Section",
+      "bodies": [
+        "Congo Offshore"
+      ],
+      "archived": true,
+      "criticality": null,
+      "state": {
+        "name": "1 - Disponible - Normal",
+        "servicing": true
+      },
+      "node": true,
+      "inServiceDate": null,
+      "sharedData": false,
+      "lastModificationDateTime": "2026-08-30T22:00:00Z",
+      "meters": []
+    },
+    {
+      "code": "OGD_PROD",
+      "name": "Production",
+      "interfaceKey": null,
+      "parentCode": "OGD",
+      "familyCode": "SECTION",
+      "familyName": "Section",
+      "bodies": [
+        "UK Southern North Sea"
+      ],
+      "archived": false,
+      "criticality": null,
+      "state": {
+        "name": "1 - Disponible - Normal",
+        "servicing": true
+      },
+      "node": true,
+      "inServiceDate": null,
+      "sharedData": false,
+      "lastModificationDateTime": "2026-08-30T22:00:00Z",
+      "meters": []
+    },
+    {
+      "code": "OGD_UTIL",
+      "name": "Utilities",
+      "interfaceKey": null,
+      "parentCode": "OGD",
+      "familyCode": "SECTION",
+      "familyName": "Section",
+      "bodies": [
+        "UK Southern North Sea"
+      ],
+      "archived": false,
+      "criticality": null,
+      "state": {
+        "name": "1 - Disponible - Normal",
+        "servicing": true
+      },
+      "node": true,
+      "inServiceDate": null,
+      "sharedData": false,
+      "lastModificationDateTime": "2026-08-30T22:00:00Z",
+      "meters": []
+    },
+    {
+      "code": "OGD_SAFE",
+      "name": "Safety systems",
+      "interfaceKey": null,
+      "parentCode": "OGD",
+      "familyCode": "SECTION",
+      "familyName": "Section",
+      "bodies": [
+        "UK Southern North Sea"
+      ],
+      "archived": false,
+      "criticality": null,
+      "state": {
+        "name": "1 - Disponible - Normal",
+        "servicing": true
+      },
+      "node": true,
+      "inServiceDate": null,
+      "sharedData": false,
+      "lastModificationDateTime": "2026-08-30T22:00:00Z",
+      "meters": []
+    },
+    {
+      "code": "OGD_DRIL",
+      "name": "Drilling",
+      "interfaceKey": null,
+      "parentCode": "OGD",
+      "familyCode": "SECTION",
+      "familyName": "Section",
+      "bodies": [
+        "UK Southern North Sea"
+      ],
+      "archived": false,
+      "criticality": null,
+      "state": {
+        "name": "1 - Disponible - Normal",
+        "servicing": true
+      },
+      "node": true,
+      "inServiceDate": null,
+      "sharedData": false,
+      "lastModificationDateTime": "2026-08-30T22:00:00Z",
+      "meters": []
+    },
+    {
+      "code": "LQ-OLW_ACC",
+      "name": "Accommodation",
+      "interfaceKey": null,
+      "parentCode": "LQ-OLW",
+      "familyCode": "SECTION",
+      "familyName": "Section",
+      "bodies": [
+        "Gabon Onshore Operations"
+      ],
+      "archived": false,
+      "criticality": null,
+      "state": {
+        "name": "1 - Disponible - Normal",
+        "servicing": true
+      },
+      "node": true,
+      "inServiceDate": null,
+      "sharedData": false,
+      "lastModificationDateTime": "2026-08-30T22:00:00Z",
+      "meters": []
+    },
+    {
+      "code": "OLW-OLD_PROD",
+      "name": "Production",
+      "interfaceKey": null,
+      "parentCode": "OLW-OLD",
+      "familyCode": "SECTION",
+      "familyName": "Section",
+      "bodies": [
+        "Gabon Onshore Operations"
+      ],
+      "archived": false,
+      "criticality": null,
+      "state": {
+        "name": "1 - Disponible - Normal",
+        "servicing": true
+      },
+      "node": true,
+      "inServiceDate": null,
+      "sharedData": false,
+      "lastModificationDateTime": "2026-08-30T22:00:00Z",
+      "meters": []
+    },
+    {
+      "code": "SYS_OLW_001",
+      "name": "Obangue gas compression train A",
+      "interfaceKey": null,
+      "parentCode": "OLW_PROD",
+      "familyCode": "SYS_GC",
+      "familyName": "System - Gas compression",
+      "bodies": [
+        "Gabon Onshore Operations"
+      ],
+      "archived": false,
+      "criticality": {
+        "code": "PC",
+        "name": "Production Critical"
+      },
+      "state": {
+        "name": "1 - Disponible - Normal",
+        "servicing": true
+      },
+      "node": false,
+      "inServiceDate": "1998-05-01T00:00:00Z",
+      "sharedData": false,
+      "lastModificationDateTime": "2026-08-30T22:00:00Z",
+      "meters": []
+    },
+    {
+      "code": "SYS_OLW_002",
+      "name": "Obangue oil separation",
+      "interfaceKey": null,
+      "parentCode": "OLW_PROD",
+      "familyCode": "SYS_OS",
+      "familyName": "System - Oil separation",
+      "bodies": [
+        "Gabon Onshore Operations"
+      ],
+      "archived": false,
+      "criticality": {
+        "code": "PC",
+        "name": "Production Critical"
+      },
+      "state": {
+        "name": "1 - Disponible - Normal",
+        "servicing": true
+      },
+      "node": false,
+      "inServiceDate": "1998-05-01T00:00:00Z",
+      "sharedData": false,
+      "lastModificationDateTime": "2026-08-30T22:00:00Z",
+      "meters": []
+    },
+    {
+      "code": "SYS_OLW_003",
+      "name": "Obangue water injection",
+      "interfaceKey": null,
+      "parentCode": "OLW_PROD",
+      "familyCode": "SYS_WI",
+      "familyName": "System - Water injection",
+      "bodies": [
+        "Gabon Onshore Operations"
+      ],
+      "archived": false,
+      "criticality": null,
+      "state": {
+        "name": "2 - Disponible - Dégradé",
+        "servicing": true
+      },
+      "node": false,
+      "inServiceDate": "2002-03-01T00:00:00Z",
+      "sharedData": false,
+      "lastModificationDateTime": "2026-08-30T22:00:00Z",
+      "meters": []
+    },
+    {
+      "code": "SYS_OLW_004",
+      "name": "Obangue old diesel generator",
+      "interfaceKey": null,
+      "parentCode": "OLW_UTIL",
+      "familyCode": "SYS_PG",
+      "familyName": "System - Power generation",
+      "bodies": [
+        "Gabon Onshore Operations"
+      ],
+      "archived": true,
+      "criticality": null,
+      "state": {
+        "name": "3 - Indisponible - En panne",
+        "servicing": false
+      },
+      "node": false,
+      "inServiceDate": "1998-05-01T00:00:00Z",
+      "sharedData": false,
+      "lastModificationDateTime": "2026-08-30T22:00:00Z",
+      "meters": []
+    },
+    {
+      "code": "SYS_OLW_005",
+      "name": "Obangue fire water",
+      "interfaceKey": null,
+      "parentCode": "OLW_SAFE",
+      "familyCode": "SYS_FW",
+      "familyName": "System - Fire water",
+      "bodies": [
+        "Gabon Onshore Operations"
+      ],
+      "archived": false,
+      "criticality": {
+        "code": "SCE",
+        "name": "Safety & Environmentally Critical"
+      },
+      "state": {
+        "name": "1 - Disponible - Normal",
+        "servicing": true
+      },
+      "node": false,
+      "inServiceDate": "1998-05-01T00:00:00Z",
+      "sharedData": false,
+      "lastModificationDateTime": "2026-08-30T22:00:00Z",
+      "meters": []
+    },
+    {
+      "code": "SYS_OLW_006",
+      "name": "Obangue ESD",
+      "interfaceKey": null,
+      "parentCode": "OLW_SAFE",
+      "familyCode": "SYS_ESD",
+      "familyName": "System - Emergency shutdown",
+      "bodies": [
+        "Gabon Onshore Operations"
+      ],
+      "archived": false,
+      "criticality": {
+        "code": "SCE",
+        "name": "Safety & Environmentally Critical"
+      },
+      "state": {
+        "name": "1 - Disponible - Normal",
+        "servicing": true
+      },
+      "node": false,
+      "inServiceDate": "1998-05-01T00:00:00Z",
+      "sharedData": false,
+      "lastModificationDateTime": "2026-08-30T22:00:00Z",
+      "meters": []
+    },
+    {
+      "code": "SYS_OLW_007",
+      "name": "Obangue power generation",
+      "interfaceKey": null,
+      "parentCode": "OLW_UTIL",
+      "familyCode": "SYS_PG",
+      "familyName": "System - Power generation",
+      "bodies": [
+        "Gabon Onshore Operations"
+      ],
+      "archived": false,
+      "criticality": {
+        "code": "PC",
+        "name": "Production critical"
+      },
+      "state": {
+        "name": "1 - Disponible - Normal",
+        "servicing": true
+      },
+      "node": false,
+      "inServiceDate": "2010-01-01T00:00:00Z",
+      "sharedData": false,
+      "lastModificationDateTime": "2026-08-30T22:00:00Z",
+      "meters": []
+    },
+    {
+      "code": "OLW_PROD_AREA_1",
+      "name": "Process area 1",
+      "interfaceKey": null,
+      "parentCode": "OLW_PROD",
+      "familyCode": "LOC_TAG",
+      "familyName": "Location tag",
+      "bodies": [
+        "Gabon Onshore Operations"
+      ],
+      "archived": false,
+      "criticality": null,
+      "state": {
+        "name": "1 - Disponible - Normal",
+        "servicing": true
+      },
+      "node": false,
+      "inServiceDate": null,
+      "sharedData": false,
+      "lastModificationDateTime": "2026-08-30T22:00:00Z",
+      "meters": []
+    },
+    {
+      "code": "SYS_JNR_001",
+      "name": "Tchatamba gas compression",
+      "interfaceKey": null,
+      "parentCode": "JNR_PROD",
+      "familyCode": "SYS_GC",
+      "familyName": "System - Gas compression",
+      "bodies": [
+        "Gabon Offshore Operations"
+      ],
+      "archived": false,
+      "criticality": {
+        "code": "PC",
+        "name": "Production Critical"
+      },
+      "state": {
+        "name": "1 - Disponible - Normal",
+        "servicing": true
+      },
+      "node": false,
+      "inServiceDate": "1997-09-01T00:00:00Z",
+      "sharedData": false,
+      "lastModificationDateTime": "2026-08-30T22:00:00Z",
+      "meters": []
+    },
+    {
+      "code": "SYS_JNR_002",
+      "name": "Tchatamba oil separation",
+      "interfaceKey": null,
+      "parentCode": "JNR_PROD",
+      "familyCode": "SYS_OS",
+      "familyName": "System - Oil separation",
+      "bodies": [
+        "Gabon Offshore Operations"
+      ],
+      "archived": false,
+      "criticality": {
+        "code": "PC",
+        "name": "Production Critical"
+      },
+      "state": {
+        "name": "1 - Disponible - Normal",
+        "servicing": true
+      },
+      "node": false,
+      "inServiceDate": "1997-09-01T00:00:00Z",
+      "sharedData": false,
+      "lastModificationDateTime": "2026-08-30T22:00:00Z",
+      "meters": []
+    },
+    {
+      "code": "SYS_JNR_003",
+      "name": "Tchatamba crane",
+      "interfaceKey": null,
+      "parentCode": "JNR_UTIL",
+      "familyCode": "SYS_CR",
+      "familyName": "System - Lifting and cranes",
+      "bodies": [
+        "Gabon Offshore Operations"
+      ],
+      "archived": false,
+      "criticality": {
+        "code": "SCE",
+        "name": "Safety & Environmentally Critical"
+      },
+      "state": {
+        "name": "1 - Disponible - Normal",
+        "servicing": true
+      },
+      "node": false,
+      "inServiceDate": "1997-09-01T00:00:00Z",
+      "sharedData": false,
+      "lastModificationDateTime": "2026-08-30T22:00:00Z",
+      "meters": []
+    },
+    {
+      "code": "SYS_JNR_004",
+      "name": "Tchatamba power generation",
+      "interfaceKey": null,
+      "parentCode": "JNR_UTIL",
+      "familyCode": "SYS_PG",
+      "familyName": "System - Power generation",
+      "bodies": [
+        "Gabon Offshore Operations"
+      ],
+      "archived": false,
+      "criticality": {
+        "code": "PC",
+        "name": "Production Critical"
+      },
+      "state": {
+        "name": "1 - Disponible - Normal",
+        "servicing": true
+      },
+      "node": false,
+      "inServiceDate": "1997-09-01T00:00:00Z",
+      "sharedData": false,
+      "lastModificationDateTime": "2026-08-30T22:00:00Z",
+      "meters": [
+        {
+          "name": "Running hours",
+          "unitCode": "H",
+          "value": 415000,
+          "readingDateTime": "2026-08-31T00:00:00Z",
+          "userName": "MX_TECH"
+        }
+      ]
+    },
+    {
+      "code": "SYS_JNR_005",
+      "name": "Tchatamba ESD",
+      "interfaceKey": null,
+      "parentCode": "JNR_SAFE",
+      "familyCode": "SYS_ESD",
+      "familyName": "System - Emergency shutdown",
+      "bodies": [
+        "Gabon Offshore Operations"
+      ],
+      "archived": false,
+      "criticality": {
+        "code": "SCE",
+        "name": "Safety & Environmentally Critical"
+      },
+      "state": {
+        "name": "1 - Disponible - Normal",
+        "servicing": true
+      },
+      "node": false,
+      "inServiceDate": "1997-09-01T00:00:00Z",
+      "sharedData": false,
+      "lastModificationDateTime": "2026-08-30T22:00:00Z",
+      "meters": []
+    },
+    {
+      "code": "SYS_JNR_077",
+      "name": "Tchatamba misplaced HVAC",
+      "interfaceKey": null,
+      "parentCode": "JNR",
+      "familyCode": "SYS_HV",
+      "familyName": "System - HVAC",
+      "bodies": [
+        "Gabon Offshore Operations"
+      ],
+      "archived": false,
+      "criticality": null,
+      "state": {
+        "name": "1 - Disponible - Normal",
+        "servicing": true
+      },
+      "node": false,
+      "inServiceDate": "2020-01-01T00:00:00Z",
+      "sharedData": false,
+      "lastModificationDateTime": "2026-08-30T22:00:00Z",
+      "meters": []
+    },
+    {
+      "code": "SYS_MBK_001",
+      "name": "Emeraude oil separation",
+      "interfaceKey": null,
+      "parentCode": "MBK_PROD",
+      "familyCode": "SYS_OS",
+      "familyName": "System - Oil separation",
+      "bodies": [
+        "Congo Offshore"
+      ],
+      "archived": false,
+      "criticality": {
+        "code": "PC",
+        "name": "Production Critical"
+      },
+      "state": {
+        "name": "1 - Disponible - Normal",
+        "servicing": true
+      },
+      "node": false,
+      "inServiceDate": "1972-03-15T00:00:00Z",
+      "sharedData": false,
+      "lastModificationDateTime": "2026-08-30T22:00:00Z",
+      "meters": []
+    },
+    {
+      "code": "SYS_MBK_002",
+      "name": "Emeraude export metering",
+      "interfaceKey": null,
+      "parentCode": "MBK_PROD",
+      "familyCode": "SYS_EX",
+      "familyName": "System - Export and metering",
+      "bodies": [
+        "Congo Offshore"
+      ],
+      "archived": false,
+      "criticality": {
+        "code": "PC",
+        "name": "Production Critical"
+      },
+      "state": {
+        "name": "1 - Disponible - Normal",
+        "servicing": true
+      },
+      "node": false,
+      "inServiceDate": "1980-01-01T00:00:00Z",
+      "sharedData": false,
+      "lastModificationDateTime": "2026-08-30T22:00:00Z",
+      "meters": []
+    },
+    {
+      "code": "SYS_MBK_003",
+      "name": "Emeraude fire water",
+      "interfaceKey": null,
+      "parentCode": "MBK_SAFE",
+      "familyCode": "SYS_FW",
+      "familyName": "System - Fire water",
+      "bodies": [
+        "Congo Offshore"
+      ],
+      "archived": false,
+      "criticality": {
+        "code": "SCE",
+        "name": "Safety & Environmentally Critical"
+      },
+      "state": {
+        "name": "3 - Indisponible - En panne",
+        "servicing": false
+      },
+      "node": false,
+      "inServiceDate": "1972-03-15T00:00:00Z",
+      "sharedData": false,
+      "lastModificationDateTime": "2026-08-30T22:00:00Z",
+      "meters": []
+    },
+    {
+      "code": "SYS_OGD_001",
+      "name": "Babbage gas compression",
+      "interfaceKey": null,
+      "parentCode": "OGD_PROD",
+      "familyCode": "SYS_GC",
+      "familyName": "System - Gas compression",
+      "bodies": [
+        "UK Southern North Sea"
+      ],
+      "archived": false,
+      "criticality": {
+        "code": "PC",
+        "name": "Production Critical"
+      },
+      "state": {
+        "name": "1 - Disponible - Normal",
+        "servicing": true
+      },
+      "node": false,
+      "inServiceDate": "2010-08-01T00:00:00Z",
+      "sharedData": false,
+      "lastModificationDateTime": "2026-08-30T22:00:00Z",
+      "meters": []
+    },
+    {
+      "code": "SYS_OGD_002",
+      "name": "Babbage power generation",
+      "interfaceKey": null,
+      "parentCode": "OGD_UTIL",
+      "familyCode": "SYS_PG",
+      "familyName": "System - Power generation",
+      "bodies": [
+        "UK Southern North Sea"
+      ],
+      "archived": false,
+      "criticality": {
+        "code": "PC",
+        "name": "Production Critical"
+      },
+      "state": {
+        "name": "1 - Disponible - Normal",
+        "servicing": true
+      },
+      "node": false,
+      "inServiceDate": "2010-08-01T00:00:00Z",
+      "sharedData": false,
+      "lastModificationDateTime": "2026-08-30T22:00:00Z",
+      "meters": []
+    },
+    {
+      "code": "SYS_OGD_003",
+      "name": "Babbage ESD",
+      "interfaceKey": null,
+      "parentCode": "OGD_SAFE",
+      "familyCode": "SYS_ESD",
+      "familyName": "System - Emergency shutdown",
+      "bodies": [
+        "UK Southern North Sea"
+      ],
+      "archived": false,
+      "criticality": {
+        "code": "SCE",
+        "name": "Safety & Environmentally Critical"
+      },
+      "state": {
+        "name": "1 - Disponible - Normal",
+        "servicing": true
+      },
+      "node": false,
+      "inServiceDate": "2010-08-01T00:00:00Z",
+      "sharedData": false,
+      "lastModificationDateTime": "2026-08-30T22:00:00Z",
+      "meters": []
+    },
+    {
+      "code": "SYS_OGD_009",
+      "name": "Babbage drilling hoisting",
+      "interfaceKey": null,
+      "parentCode": "OGD_DRIL",
+      "familyCode": "SYS_CR",
+      "familyName": "System - Lifting and cranes",
+      "bodies": [
+        "UK Southern North Sea"
+      ],
+      "archived": false,
+      "criticality": null,
+      "state": {
+        "name": "1 - Disponible - Normal",
+        "servicing": true
+      },
+      "node": false,
+      "inServiceDate": "2012-01-01T00:00:00Z",
+      "sharedData": false,
+      "lastModificationDateTime": "2026-08-30T22:00:00Z",
+      "meters": []
+    },
+    {
+      "code": "SYS_LQ-OLW_001",
+      "name": "Living quarters HVAC",
+      "interfaceKey": null,
+      "parentCode": "LQ-OLW_ACC",
+      "familyCode": "SYS_HV",
+      "familyName": "System - HVAC",
+      "bodies": [
+        "Gabon Onshore Operations"
+      ],
+      "archived": false,
+      "criticality": null,
+      "state": {
+        "name": "1 - Disponible - Normal",
+        "servicing": true
+      },
+      "node": false,
+      "inServiceDate": "2005-02-01T00:00:00Z",
+      "sharedData": false,
+      "lastModificationDateTime": "2026-08-30T22:00:00Z",
+      "meters": []
+    },
+    {
+      "code": "SYS_GEN_001",
+      "name": "Emergency generator",
+      "interfaceKey": null,
+      "parentCode": "OLW_UTIL",
+      "familyCode": "SYS_PG",
+      "familyName": "System - Power generation",
+      "bodies": [
+        "Gabon Onshore Operations"
+      ],
+      "archived": false,
+      "criticality": {
+        "code": "SCE",
+        "name": "Safety & Environmentally Critical"
+      },
+      "state": {
+        "name": "1 - Disponible - Normal",
+        "servicing": true
+      },
+      "node": false,
+      "inServiceDate": "2015-01-01T00:00:00Z",
+      "sharedData": false,
+      "lastModificationDateTime": "2026-08-30T22:00:00Z",
+      "meters": []
+    },
+    {
+      "code": "OLW-K-101A",
+      "name": "Compressor train A - 1st stage",
+      "interfaceKey": null,
+      "parentCode": "SYS_OLW_001",
+      "familyCode": "CO_CE",
+      "familyName": "Compressor - Centrifugal",
+      "bodies": [
+        "Gabon Onshore Operations"
+      ],
+      "archived": false,
+      "criticality": {
+        "code": "PC",
+        "name": "Production Critical"
+      },
+      "state": {
+        "name": "1 - Disponible - Normal",
+        "servicing": true
+      },
+      "node": false,
+      "inServiceDate": "1998-05-01T00:00:00Z",
+      "sharedData": false,
+      "lastModificationDateTime": "2026-08-30T22:00:00Z",
+      "meters": [
+        {
+          "name": "Running hours",
+          "unitCode": "H",
+          "value": 185420,
+          "readingDateTime": "2026-08-31T00:00:00Z",
+          "userName": "MX_TECH"
+        }
+      ]
+    },
+    {
+      "code": "OLW-K-101B",
+      "name": "Compressor train A - 2nd stage",
+      "interfaceKey": null,
+      "parentCode": "SYS_OLW_001",
+      "familyCode": "CO_CE",
+      "familyName": "Compressor - Centrifugal",
+      "bodies": [
+        "Gabon Onshore Operations"
+      ],
+      "archived": false,
+      "criticality": {
+        "code": "PC",
+        "name": "Production Critical"
+      },
+      "state": {
+        "name": "1 - Disponible - Normal",
+        "servicing": true
+      },
+      "node": false,
+      "inServiceDate": "1998-05-01T00:00:00Z",
+      "sharedData": false,
+      "lastModificationDateTime": "2026-08-30T22:00:00Z",
+      "meters": [
+        {
+          "name": "Running hours",
+          "unitCode": "H",
+          "value": 172003,
+          "readingDateTime": "2026-08-31T00:00:00Z",
+          "userName": "MX_TECH"
+        }
+      ]
+    },
+    {
+      "code": "OLW-E-101",
+      "name": "Compressor suction cooler",
+      "interfaceKey": null,
+      "parentCode": "SYS_OLW_001",
+      "familyCode": "HE_ST",
+      "familyName": "Heat exchanger - Shell and tube",
+      "bodies": [
+        "Gabon Onshore Operations"
+      ],
+      "archived": false,
+      "criticality": null,
+      "state": {
+        "name": "1 - Disponible - Normal",
+        "servicing": true
+      },
+      "node": false,
+      "inServiceDate": "1998-05-01T00:00:00Z",
+      "sharedData": false,
+      "lastModificationDateTime": "2026-08-30T22:00:00Z",
+      "meters": []
+    },
+    {
+      "code": "OLW-V-201",
+      "name": "HP separator",
+      "interfaceKey": null,
+      "parentCode": "SYS_OLW_002",
+      "familyCode": "VE_SE",
+      "familyName": "Vessel - Separator",
+      "bodies": [
+        "Gabon Onshore Operations"
+      ],
+      "archived": false,
+      "criticality": {
+        "code": "PC",
+        "name": "Production Critical"
+      },
+      "state": {
+        "name": "1 - Disponible - Normal",
+        "servicing": true
+      },
+      "node": false,
+      "inServiceDate": "1998-05-01T00:00:00Z",
+      "sharedData": false,
+      "lastModificationDateTime": "2026-08-30T22:00:00Z",
+      "meters": []
+    },
+    {
+      "code": "OLW-V-202",
+      "name": "LP separator",
+      "interfaceKey": null,
+      "parentCode": "SYS_OLW_002",
+      "familyCode": "VE_SE",
+      "familyName": "Vessel - Separator",
+      "bodies": [
+        "Gabon Onshore Operations"
+      ],
+      "archived": false,
+      "criticality": null,
+      "state": {
+        "name": "1 - Disponible - Normal",
+        "servicing": true
+      },
+      "node": false,
+      "inServiceDate": "1998-05-01T00:00:00Z",
+      "sharedData": false,
+      "lastModificationDateTime": "2026-08-30T22:00:00Z",
+      "meters": []
+    },
+    {
+      "code": "OLW-XV-2001",
+      "name": "HP separator inlet shutdown valve",
+      "interfaceKey": null,
+      "parentCode": "SYS_OLW_002",
+      "familyCode": "VA_XV",
+      "familyName": "Valve - Shutdown valve",
+      "bodies": [
+        "Gabon Onshore Operations"
+      ],
+      "archived": false,
+      "criticality": {
+        "code": "SCE",
+        "name": "Safety & Environmentally Critical"
+      },
+      "state": {
+        "name": "1 - Disponible - Normal",
+        "servicing": true
+      },
+      "node": false,
+      "inServiceDate": "1998-05-01T00:00:00Z",
+      "sharedData": false,
+      "lastModificationDateTime": "2026-08-30T22:00:00Z",
+      "meters": []
+    },
+    {
+      "code": "OLW-P-301A",
+      "name": "Water injection pump A",
+      "interfaceKey": null,
+      "parentCode": "SYS_OLW_003",
+      "familyCode": "PU_CE",
+      "familyName": "Pump - Centrifugal",
+      "bodies": [
+        "Gabon Onshore Operations"
+      ],
+      "archived": false,
+      "criticality": null,
+      "state": {
+        "name": "1 - Disponible - Normal",
+        "servicing": true
+      },
+      "node": false,
+      "inServiceDate": "2002-03-01T00:00:00Z",
+      "sharedData": false,
+      "lastModificationDateTime": "2026-08-30T22:00:00Z",
+      "meters": [
+        {
+          "name": "Running hours",
+          "unitCode": "H",
+          "value": 98770,
+          "readingDateTime": "2026-08-31T00:00:00Z",
+          "userName": "MX_TECH"
+        }
+      ]
+    },
+    {
+      "code": "OLW-P-301B",
+      "name": "Water injection pump B",
+      "interfaceKey": null,
+      "parentCode": "SYS_OLW_003",
+      "familyCode": "PU_CE",
+      "familyName": "Pump - Centrifugal",
+      "bodies": [
+        "Gabon Onshore Operations"
+      ],
+      "archived": false,
+      "criticality": null,
+      "state": {
+        "name": "2 - Disponible - Dégradé",
+        "servicing": true
+      },
+      "node": false,
+      "inServiceDate": "2002-03-01T00:00:00Z",
+      "sharedData": false,
+      "lastModificationDateTime": "2026-08-30T22:00:00Z",
+      "meters": [
+        {
+          "name": "Running hours",
+          "unitCode": "H",
+          "value": 41002,
+          "readingDateTime": "2026-08-31T00:00:00Z",
+          "userName": "MX_TECH"
+        }
+      ]
+    },
+    {
+      "code": "OLW-P-301C",
+      "name": "Water injection pump C (screw)",
+      "interfaceKey": null,
+      "parentCode": "SYS_OLW_003",
+      "familyCode": "PU_SC",
+      "familyName": "Pump - Screw",
+      "bodies": [
+        "Gabon Onshore Operations"
+      ],
+      "archived": false,
+      "criticality": null,
+      "state": {
+        "name": "1 - Disponible - Normal",
+        "servicing": true
+      },
+      "node": false,
+      "inServiceDate": "2019-03-01T00:00:00Z",
+      "sharedData": false,
+      "lastModificationDateTime": "2026-08-30T22:00:00Z",
+      "meters": []
+    },
+    {
+      "code": "OLW-P-501",
+      "name": "Fire water pump",
+      "interfaceKey": null,
+      "parentCode": "SYS_OLW_005",
+      "familyCode": "PU_CE",
+      "familyName": "Pump - Centrifugal",
+      "bodies": [
+        "Gabon Onshore Operations"
+      ],
+      "archived": false,
+      "criticality": {
+        "code": "SCE",
+        "name": "Safety & Environmentally Critical"
+      },
+      "state": {
+        "name": "1 - Disponible - Normal",
+        "servicing": true
+      },
+      "node": false,
+      "inServiceDate": "1998-05-01T00:00:00Z",
+      "sharedData": false,
+      "lastModificationDateTime": "2026-08-30T22:00:00Z",
+      "meters": []
+    },
+    {
+      "code": "OLW-G-701",
+      "name": "Main generator",
+      "interfaceKey": null,
+      "parentCode": "SYS_OLW_007",
+      "familyCode": "EG_DD",
+      "familyName": "Electric generator - Diesel driven",
+      "bodies": [
+        "Gabon Onshore Operations"
+      ],
+      "archived": false,
+      "criticality": {
+        "code": "PC",
+        "name": "Production Critical"
+      },
+      "state": {
+        "name": "1 - Disponible - Normal",
+        "servicing": true
+      },
+      "node": false,
+      "inServiceDate": "2010-01-01T00:00:00Z",
+      "sharedData": false,
+      "lastModificationDateTime": "2026-08-30T22:00:00Z",
+      "meters": []
+    },
+    {
+      "code": "OLW-Z-001",
+      "name": "Mystery skid",
+      "interfaceKey": null,
+      "parentCode": "SYS_OLW_007",
+      "familyCode": "XX_ZZ",
+      "familyName": "Unknown - Unknown",
+      "bodies": [
+        "Gabon Onshore Operations"
+      ],
+      "archived": false,
+      "criticality": null,
+      "state": {
+        "name": "1 - Disponible - Normal",
+        "servicing": true
+      },
+      "node": false,
+      "inServiceDate": "2010-01-01T00:00:00Z",
+      "sharedData": false,
+      "lastModificationDateTime": "2026-08-30T22:00:00Z",
+      "meters": []
+    },
+    {
+      "code": "OLW-P-601",
+      "name": "Chemical injection pump",
+      "interfaceKey": null,
+      "parentCode": "SYS_OLW_007",
+      "familyCode": "PU",
+      "familyName": "Pump",
+      "bodies": [
+        "Gabon Onshore Operations"
+      ],
+      "archived": false,
+      "criticality": null,
+      "state": {
+        "name": "1 - Disponible - Normal",
+        "servicing": true
+      },
+      "node": false,
+      "inServiceDate": "2010-01-01T00:00:00Z",
+      "sharedData": false,
+      "lastModificationDateTime": "2026-08-30T22:00:00Z",
+      "meters": []
+    },
+    {
+      "code": "OLW-GD-001",
+      "name": "Gas detector zone 1",
+      "interfaceKey": null,
+      "parentCode": "SYS_OLW_006",
+      "familyCode": "FD_GD",
+      "familyName": "Fire and gas detector - Gas detector",
+      "bodies": [
+        "Gabon Onshore Operations"
+      ],
+      "archived": false,
+      "criticality": {
+        "code": "SCE",
+        "name": "Safety & Environmentally Critical"
+      },
+      "state": {
+        "name": "1 - Disponible - Normal",
+        "servicing": true
+      },
+      "node": false,
+      "inServiceDate": "1998-05-01T00:00:00Z",
+      "sharedData": false,
+      "lastModificationDateTime": "2026-08-30T22:00:00Z",
+      "meters": []
+    },
+    {
+      "code": "OLW-G-401-OLD",
+      "name": "Old diesel generator",
+      "interfaceKey": null,
+      "parentCode": "SYS_OLW_004",
+      "familyCode": "EG_DD",
+      "familyName": "Electric generator - Diesel driven",
+      "bodies": [
+        "Gabon Onshore Operations"
+      ],
+      "archived": true,
+      "criticality": null,
+      "state": {
+        "name": "3 - Indisponible - En panne",
+        "servicing": false
+      },
+      "node": false,
+      "inServiceDate": "1998-05-01T00:00:00Z",
+      "sharedData": false,
+      "lastModificationDateTime": "2026-08-30T22:00:00Z",
+      "meters": []
+    },
+    {
+      "code": "JNR-K-101",
+      "name": "Gas compressor",
+      "interfaceKey": null,
+      "parentCode": "SYS_JNR_001",
+      "familyCode": "CO_CE",
+      "familyName": "Compressor - Centrifugal",
+      "bodies": [
+        "Gabon Offshore Operations"
+      ],
+      "archived": false,
+      "criticality": {
+        "code": "PC",
+        "name": "Production Critical"
+      },
+      "state": {
+        "name": "1 - Disponible - Normal",
+        "servicing": true
+      },
+      "node": false,
+      "inServiceDate": "1997-09-01T00:00:00Z",
+      "sharedData": false,
+      "lastModificationDateTime": "2026-08-30T22:00:00Z",
+      "meters": [
+        {
+          "name": "Running hours",
+          "unitCode": "H",
+          "value": 150000,
+          "readingDateTime": "2026-09-03T06:00:00Z",
+          "userName": "MX_TECH"
+        }
+      ]
+    },
+    {
+      "code": "JNR-V-201",
+      "name": "Test separator",
+      "interfaceKey": null,
+      "parentCode": "SYS_JNR_002",
+      "familyCode": "VE_SE",
+      "familyName": "Vessel - Separator",
+      "bodies": [
+        "Gabon Offshore Operations"
+      ],
+      "archived": false,
+      "criticality": null,
+      "state": {
+        "name": "1 - Disponible - Normal",
+        "servicing": true
+      },
+      "node": false,
+      "inServiceDate": "1997-09-01T00:00:00Z",
+      "sharedData": false,
+      "lastModificationDateTime": "2026-08-30T22:00:00Z",
+      "meters": []
+    },
+    {
+      "code": "JNR-G-401",
+      "name": "Gas turbine generator A",
+      "interfaceKey": null,
+      "parentCode": "SYS_JNR_004",
+      "familyCode": "TU_GT",
+      "familyName": "Turbine - Gas turbine",
+      "bodies": [
+        "Gabon Offshore Operations"
+      ],
+      "archived": false,
+      "criticality": {
+        "code": "PC",
+        "name": "Production Critical"
+      },
+      "state": {
+        "name": "1 - Disponible - Normal",
+        "servicing": true
+      },
+      "node": false,
+      "inServiceDate": "1997-09-01T00:00:00Z",
+      "sharedData": false,
+      "lastModificationDateTime": "2026-08-30T22:00:00Z",
+      "meters": [
+        {
+          "name": "Running hours",
+          "unitCode": "H",
+          "value": 210540,
+          "readingDateTime": "2026-08-31T00:00:00Z",
+          "userName": "MX_TECH"
+        }
+      ]
+    },
+    {
+      "code": "JNR-G-402",
+      "name": "Gas turbine generator B",
+      "interfaceKey": null,
+      "parentCode": "SYS_JNR_004",
+      "familyCode": "TU_GT",
+      "familyName": "Turbine - Gas turbine",
+      "bodies": [
+        "Gabon Offshore Operations"
+      ],
+      "archived": false,
+      "criticality": {
+        "code": "PC",
+        "name": "Production Critical"
+      },
+      "state": {
+        "name": "1 - Disponible - Normal",
+        "servicing": true
+      },
+      "node": false,
+      "inServiceDate": "1997-09-01T00:00:00Z",
+      "sharedData": false,
+      "lastModificationDateTime": "2026-08-30T22:00:00Z",
+      "meters": [
+        {
+          "name": "Running hours",
+          "unitCode": "H",
+          "value": 205118,
+          "readingDateTime": "2026-08-31T00:00:00Z",
+          "userName": "MX_TECH"
+        }
+      ]
+    },
+    {
+      "code": "JNR-XV-5001",
+      "name": "Riser ESD valve",
+      "interfaceKey": null,
+      "parentCode": "SYS_JNR_005",
+      "familyCode": "VA_XV",
+      "familyName": "Valve - Shutdown valve",
+      "bodies": [
+        "Gabon Offshore Operations"
+      ],
+      "archived": false,
+      "criticality": {
+        "code": "SCE",
+        "name": "Safety & Environmentally Critical"
+      },
+      "state": {
+        "name": "1 - Disponible - Normal",
+        "servicing": true
+      },
+      "node": false,
+      "inServiceDate": "1997-09-01T00:00:00Z",
+      "sharedData": false,
+      "lastModificationDateTime": "2026-08-30T22:00:00Z",
+      "meters": []
+    },
+    {
+      "code": "JNR-PSV-5002",
+      "name": "Flare KO drum PSV",
+      "interfaceKey": null,
+      "parentCode": "SYS_JNR_005",
+      "familyCode": "VA_PSV",
+      "familyName": "Valve - Pressure safety valve",
+      "bodies": [
+        "Gabon Offshore Operations"
+      ],
+      "archived": false,
+      "criticality": {
+        "code": "SCE",
+        "name": "Safety & Environmentally Critical"
+      },
+      "state": {
+        "name": "1 - Disponible - Normal",
+        "servicing": true
+      },
+      "node": false,
+      "inServiceDate": "1997-09-01T00:00:00Z",
+      "sharedData": false,
+      "lastModificationDateTime": "2026-08-30T22:00:00Z",
+      "meters": []
+    },
+    {
+      "code": "JNR-CR-301",
+      "name": "Pedestal crane",
+      "interfaceKey": null,
+      "parentCode": "SYS_JNR_003",
+      "familyCode": "TU_GT",
+      "familyName": "Turbine - Gas turbine",
+      "bodies": [
+        "Gabon Offshore Operations"
+      ],
+      "archived": false,
+      "criticality": {
+        "code": "SCE",
+        "name": "Safety & Environmentally Critical"
+      },
+      "state": {
+        "name": "1 - Disponible - Normal",
+        "servicing": true
+      },
+      "node": false,
+      "inServiceDate": "1997-09-01T00:00:00Z",
+      "sharedData": false,
+      "lastModificationDateTime": "2026-08-30T22:00:00Z",
+      "meters": []
+    },
+    {
+      "code": "JNR-HV-901",
+      "name": "Misplaced HVAC unit",
+      "interfaceKey": null,
+      "parentCode": "SYS_JNR_077",
+      "familyCode": "HE_ST",
+      "familyName": "Heat exchanger - Shell and tube",
+      "bodies": [
+        "Gabon Offshore Operations"
+      ],
+      "archived": false,
+      "criticality": null,
+      "state": {
+        "name": "1 - Disponible - Normal",
+        "servicing": true
+      },
+      "node": false,
+      "inServiceDate": "2020-01-01T00:00:00Z",
+      "sharedData": false,
+      "lastModificationDateTime": "2026-08-30T22:00:00Z",
+      "meters": []
+    },
+    {
+      "code": "MBK-P-101",
+      "name": "Export pump",
+      "interfaceKey": null,
+      "parentCode": "SYS_MBK_002",
+      "familyCode": "PU_CE",
+      "familyName": "Pump - Centrifugal",
+      "bodies": [
+        "Congo Offshore"
+      ],
+      "archived": false,
+      "criticality": {
+        "code": "PC",
+        "name": "Production Critical"
+      },
+      "state": {
+        "name": "1 - Disponible - Normal",
+        "servicing": true
+      },
+      "node": false,
+      "inServiceDate": "1980-01-01T00:00:00Z",
+      "sharedData": false,
+      "lastModificationDateTime": "2026-08-30T22:00:00Z",
+      "meters": [
+        {
+          "name": "Running hours",
+          "unitCode": "H",
+          "value": 63200,
+          "readingDateTime": "2026-08-31T00:00:00Z",
+          "userName": "MX_TECH"
+        }
+      ]
+    },
+    {
+      "code": "MBK-V-101",
+      "name": "Production separator",
+      "interfaceKey": null,
+      "parentCode": "SYS_MBK_001",
+      "familyCode": "VE_SE",
+      "familyName": "Vessel - Separator",
+      "bodies": [
+        "Congo Offshore"
+      ],
+      "archived": false,
+      "criticality": {
+        "code": "PC",
+        "name": "Production Critical"
+      },
+      "state": {
+        "name": "1 - Disponible - Normal",
+        "servicing": true
+      },
+      "node": false,
+      "inServiceDate": "1972-03-15T00:00:00Z",
+      "sharedData": false,
+      "lastModificationDateTime": "2026-08-30T22:00:00Z",
+      "meters": []
+    },
+    {
+      "code": "MBK-P-501",
+      "name": "Fire water pump",
+      "interfaceKey": null,
+      "parentCode": "SYS_MBK_003",
+      "familyCode": "PU_RE",
+      "familyName": "Pump - Reciprocating",
+      "bodies": [
+        "Congo Offshore"
+      ],
+      "archived": false,
+      "criticality": {
+        "code": "SCE",
+        "name": "Safety & Environmentally Critical"
+      },
+      "state": {
+        "name": "3 - Indisponible - En panne",
+        "servicing": false
+      },
+      "node": false,
+      "inServiceDate": "1972-03-15T00:00:00Z",
+      "sharedData": false,
+      "lastModificationDateTime": "2026-08-30T22:00:00Z",
+      "meters": []
+    },
+    {
+      "code": "OGD-K-101",
+      "name": "Export compressor",
+      "interfaceKey": null,
+      "parentCode": "SYS_OGD_001",
+      "familyCode": "CO_CE",
+      "familyName": "Compressor - Centrifugal",
+      "bodies": [
+        "UK Southern North Sea"
+      ],
+      "archived": false,
+      "criticality": {
+        "code": "PC",
+        "name": "Production Critical"
+      },
+      "state": {
+        "name": "1 - Disponible - Normal",
+        "servicing": true
+      },
+      "node": false,
+      "inServiceDate": "2010-08-01T00:00:00Z",
+      "sharedData": false,
+      "lastModificationDateTime": "2026-08-30T22:00:00Z",
+      "meters": []
+    },
+    {
+      "code": "OGD-G-401",
+      "name": "Generator",
+      "interfaceKey": null,
+      "parentCode": "SYS_OGD_002",
+      "familyCode": "EG_TD",
+      "familyName": "Electric generator - Turbine driven",
+      "bodies": [
+        "UK Southern North Sea"
+      ],
+      "archived": false,
+      "criticality": {
+        "code": "PC",
+        "name": "Production Critical"
+      },
+      "state": {
+        "name": "1 - Disponible - Normal",
+        "servicing": true
+      },
+      "node": false,
+      "inServiceDate": "2010-08-01T00:00:00Z",
+      "sharedData": false,
+      "lastModificationDateTime": "2026-08-30T22:00:00Z",
+      "meters": []
+    },
+    {
+      "code": "OGD-XV-3001",
+      "name": "Wellhead ESD valve",
+      "interfaceKey": null,
+      "parentCode": "SYS_OGD_003",
+      "familyCode": "VA_XV",
+      "familyName": "Valve - Shutdown valve",
+      "bodies": [
+        "UK Southern North Sea"
+      ],
+      "archived": false,
+      "criticality": {
+        "code": "SCE",
+        "name": "Safety & Environmentally Critical"
+      },
+      "state": {
+        "name": "1 - Disponible - Normal",
+        "servicing": true
+      },
+      "node": false,
+      "inServiceDate": "2010-08-01T00:00:00Z",
+      "sharedData": false,
+      "lastModificationDateTime": "2026-08-30T22:00:00Z",
+      "meters": []
+    },
+    {
+      "code": "OGD-CR-901",
+      "name": "Drilling hoist",
+      "interfaceKey": null,
+      "parentCode": "SYS_OGD_009",
+      "familyCode": "TU_GT",
+      "familyName": "Turbine - Gas turbine",
+      "bodies": [
+        "UK Southern North Sea"
+      ],
+      "archived": false,
+      "criticality": null,
+      "state": {
+        "name": "1 - Disponible - Normal",
+        "servicing": true
+      },
+      "node": false,
+      "inServiceDate": "2012-01-01T00:00:00Z",
+      "sharedData": false,
+      "lastModificationDateTime": "2026-08-30T22:00:00Z",
+      "meters": []
+    },
+    {
+      "code": "OLW-P-ORPHAN",
+      "name": "Pump without parent",
+      "interfaceKey": null,
+      "parentCode": null,
+      "familyCode": "PU_CE",
+      "familyName": "Pump - Centrifugal",
+      "bodies": [],
+      "archived": false,
+      "criticality": null,
+      "state": {
+        "name": "1 - Disponible - Normal",
+        "servicing": true
+      },
+      "node": false,
+      "inServiceDate": "2010-01-01T00:00:00Z",
+      "sharedData": false,
+      "lastModificationDateTime": "2026-08-30T22:00:00Z",
+      "meters": []
+    },
+    {
+      "code": "GEN-001",
+      "name": "Emergency generator set",
+      "interfaceKey": null,
+      "parentCode": "SYS_GEN_001",
+      "familyCode": "EG_DD",
+      "familyName": "Electric generator - Diesel driven",
+      "bodies": [
+        "Gabon Onshore Operations"
+      ],
+      "archived": false,
+      "criticality": {
+        "code": "SCE",
+        "name": "Safety & Environmentally Critical"
+      },
+      "state": {
+        "name": "1 - Disponible - Normal",
+        "servicing": true
+      },
+      "node": false,
+      "inServiceDate": "2015-01-01T00:00:00Z",
+      "sharedData": false,
+      "lastModificationDateTime": "2026-08-30T22:00:00Z",
+      "meters": []
+    }
+  ]
+}

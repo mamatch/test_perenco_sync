@@ -1,0 +1,36 @@
+# Data engineering test — sandbox environment.
+#
+#   docker compose up -d --build     start the CMMS mock API and the MDM
+#   docker compose down -v           stop and forget every state (fresh start)
+#   Ports can be changed: MDM_PORT=8001 CMMS_PORT=8081 docker compose up -d
+#
+# Services
+#   cmms-api  DIMO Maint MX connector mock   http://localhost:8080/docs
+#   mdm       systemref-lite (Django/SQLite) http://localhost:8000/admin/  (admin / admin)
+#             SQLite file mounted on the host at ./mdm_data/systemref.sqlite3
+services:
+  cmms-api:
+    build: ./mock_gmao
+    container_name: det-cmms-api
+    ports:
+      - "${CMMS_PORT:-8080}:8080"
+    environment:
+      MOCK_RATE_LIMIT_PER_MINUTE: "${MOCK_RATE_LIMIT_PER_MINUTE:-50}"
+      MOCK_CHAOS_RATE: "${MOCK_CHAOS_RATE:-0.03}"
+      MOCK_CHAOS_SEED: "1234"
+      MOCK_LATENCY_MS: "0"
+    volumes:
+      - cmms_state:/app/state
+
+  mdm:
+    build: ./systemref_lite
+    container_name: det-mdm
+    ports:
+      - "${MDM_PORT:-8000}:8000"
+    environment:
+      SYSTEMREF_DB_PATH: /data/systemref.sqlite3
+    volumes:
+      - ./mdm_data:/data
+
+volumes:
+  cmms_state:
