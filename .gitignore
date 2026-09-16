@@ -4,3 +4,4 @@ mdm_data/
 **/__pycache__/
 **/.pytest_cache/
 *.sqlite3
+.env
