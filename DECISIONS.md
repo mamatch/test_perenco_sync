@@ -160,20 +160,15 @@ right rather than coincidentally plausible.
   and no CMMS-side meter baseline for day 1 of the IoT regression check) but was not kept
   in the final submission, to avoid a second, less-complete implementation living
   alongside the tested one.
-- **Airflow**: not installed or run anywhere in this repo, on purpose -- see
-  `airflow/README.md`. Standing up a real instance (its own metadata DB, a first-run
-  admin password, a multi-minute dependency install, a default webserver port that
-  collides with the CMMS mock's own `:8080`) is real operational weight for a zip that
-  has to run unattended on an evaluator's machine, for a component that's graded as a
-  design/reasoning item, not as something that needs to be clicked through. Instead,
-  `airflow/dags/perenco_nightly_sync.py` is a real, correct DAG definition -- three tasks,
-  each a thin call into the exact same tested entrypoints `pipeline/pipeline/cli.py` uses,
-  no sync logic duplicated -- kept as reference code to read and modify live rather than
-  wired into `make up`. It also corrects one thing versus the CLI: the DAG runs the three
-  integrations as independent parallel branches (matching ARCHITECTURE_.md's original
-  sketch, since none has a real ordering dependency on another) instead of the CLI's
-  strictly sequential order, which was chosen there only for simplicity of a one-process
-  local run.
+- **Airflow**: considered and not adopted -- `ARCHITECTURE_.md` section 2 recommends
+  repointing MDAdmin's existing Celery chain instead, since introducing a second "how do
+  we schedule background work" mechanism isn't justified if Celery already does other jobs
+  there too. See #12 below for the full reasoning and the one assumption it rests on. Not
+  installed or run anywhere in this repo either way, on purpose: standing up a real
+  instance (its own metadata DB, a first-run admin password, a multi-minute dependency
+  install) is real operational weight for a zip that has to run unattended on an
+  evaluator's machine, for a component that's graded as a design/reasoning item, not as
+  something that needs to be clicked through.
 - **A dashboard UI**: kept to the text health summary + SQLite audit tables
   (`pipeline/pipeline/observability.py`), as the exercise explicitly allows ("a sketch of
   the dashboard you would give to operations" -- described in `pipeline/README.md` rather

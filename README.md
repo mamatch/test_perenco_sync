@@ -8,8 +8,6 @@
 >   `make sync` (see below) or `cd pipeline && uv run python -m pipeline run-all`.
 > - **[`DECISIONS.md`](DECISIONS.md)** — assumptions made against real sandbox data, and the
 >   questions the clarification call left open.
-> - **[`airflow/`](airflow/README.md)** — a reference (not executed) Airflow DAG for the
->   production orchestration described in `ARCHITECTURE_.md` section 2.
 >
 > `make up && make sync` runs the whole thing end to end against a fresh sandbox.
 
