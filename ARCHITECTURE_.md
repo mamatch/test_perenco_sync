@@ -26,88 +26,63 @@ The design is based on six principles:
 ## 2. Target production architecture
 
 ```text
-                                 ┌──────────────────────┐
-                                 │        MDAdmin        │
-                                 │   MDM / PostgreSQL    │
-                                 │ sites / platforms /   │
-                                 │ sections / reference  │
-                                 └──────────┬───────────┘
-                                            │
-                                      extract / CDC
-                                            │
-                                            ▼
-┌──────────────────────┐             ┌──────────────────────┐
-│   IoT historian      │             │ Snowflake / staging  │
-│ daily running-hours  │────────────▶│ raw + normalized     │
-│ CSV / landing zone   │             │ + reconciliation     │
-└──────────┬───────────┘             └──────────┬───────────┘
-           │                                    │
-           │                                    │ desired/current state
-           │                                    ▼
-           │                         ┌──────────────────────┐
-           │                         │ Reconciliation layer │
-           │                         │ Python / dbt logic   │
-           │                         │ delta + validation   │
-           │                         └──────────┬───────────┘
-           │                                    │
-           │                              action plan
-           │                                    ▼
-           │                         ┌──────────────────────┐
-           │                         │ Command / audit     │
-           │                         │ store               │
-           │                         └──────────┬───────────┘
-           │                                    │
-           │                              dispatch
-           │                                    ▼
-           │                         ┌──────────────────────┐
-           │                         │ Python integration   │
-           │                         │ workers              │
-           │                         │ retry/rate limit     │
-           │                         └───────┬─────┬────────┘
-           │                                 │     │
-           │                          REST   │     │ DB/domain adapter
-           │                                 ▼     ▼
-           │                         ┌──────────┐ ┌──────────┐
-           └────────────────────────▶│  CMMS    │ │   MDM    │
-                                     │ REST API │ │ adapter  │
-                                     └──────────┘ └──────────┘
+┌──────────────────────┐        ┌───────────────────────────┐
+│   IoT historian       │        │          MDAdmin            │
+│ daily running-hours   │        │   Django + PostgreSQL        │
+│ CSV / landing zone    │        │ (existing, unchanged)         │
+└──────────┬─────────────┘        └──────────┬──────────────────┘
+           │                                  │ read replica
+           │                                  ▼
+           │                      ┌───────────────────────────┐
+           │                      │   MDM read replica          │
+           │                      │   read-only role             │
+           │                      └──────────┬──────────────────┘
+           │                                 │ read
+           │                                 │
+           ▼                                 ▼
+     ┌─────────────────────────────────────────────────────┐
+     │                 Sync service (Python)                 │
+     │  functional core (pure delta) + I/O shell               │
+     │  mdm_to_cmms / cmms_to_mdm / iot_to_cmms                  │
+     └───────┬─────────────────────┬─────────────┬───────────┘
+             │                     │             │
+        REST │               write │        plan + audit │
+             ▼                     ▼             ▼
+     ┌──────────────┐   ┌────────────────────┐ ┌──────────────────┐
+     │   CMMS API    │   │ MDAdmin management  │ │ Command / audit    │
+     │ (DIMO Maint)  │   │ command (Django)      │ │ store (PostgreSQL)  │
+     └──────────────┘   └────────────────────┘ └──────────────────┘
 
-                         Airflow orchestrates the batch,
-                    reconciliation tasks and operational checks.
+     Celery (MDAdmin's existing chain, repointed) triggers the sync
+     service's three independent task groups nightly.
+
+     Snowflake / dbt / Airbyte replicate MDM PostgreSQL and the
+     audit store downstream, for analytics/history only --
+     never on this operational path.
 ```
 
-### Why Airflow in production
+### Why Celery, not a new orchestrator
 
-The workload is a nightly batch with explicit dependencies, retries, backfills and a need for operational visibility. Airflow is therefore a better orchestration boundary than embedding the complete workflow in database tasks.
+MDAdmin already runs a Celery chain in production (`docs/01_context.md`) -- Celery is Perenco's existing mechanism for scheduled/background work, not something this design introduces. Assuming, as this design does, that Celery serves other jobs in MDAdmin beyond this one chain, the lowest-risk move is to repoint the existing chain rather than add a second "how do we schedule background work" mechanism (Airflow) purely for this integration. If that assumption doesn't hold, the calculus changes -- see `DECISIONS.md`.
 
-A single DAG would contain three independent task groups:
+A Celery `group` of three independent tasks replaces the chain's current five sequential steps:
 
 ```text
-nightly_sync
-├── mdm_to_cmms
-│   ├── extract_mdm
-│   ├── extract_cmms
-│   ├── compute_delta
-│   ├── safety_checks
-│   └── execute_commands
-│
-├── cmms_to_mdm
-│   ├── extract_cmms
-│   ├── validate_reference_data
-│   ├── compute_delta
-│   └── write_mdm
-│
-└── iot_to_cmms
-    ├── discover_new_exports
-    ├── normalize_and_deduplicate
-    ├── resolve_assets
-    ├── compute_daily_readings
-    └── update_meters
+nightly_sync (Celery group, triggered by Beat)
+├── mdm_to_cmms_task    → pipeline.mdm_to_cmms.run()
+├── cmms_to_mdm_task    → pipeline.cmms_to_mdm.run()
+└── iot_to_cmms_task    → pipeline.iot_to_cmms.run()
 ```
 
-Airflow is responsible for **when and in which order** work runs. It should not contain the detailed API retry/rate-limit logic. That belongs in the integration worker/client layer.
+No edges between them: none has a hard ordering dependency on another (each owns a disjoint slice of state -- platforms/sections, systems/equipments, meters), unlike the old chain's five sequential steps.
 
-For higher operational volumes, API actions can be queued and consumed by workers with a shared rate limiter. This avoids having several parallel tasks independently violating the CMMS global limit of 50 requests/minute.
+On Kubernetes (AKS), three details make this work with the platform instead of against it:
+
+- **Beat's schedule state lives in Redis, not on local disk.** The default file-based scheduler (`celerybeat-schedule`) is lost on every pod restart (ephemeral filesystem); `celery-redbeat` stores it in the existing broker instead, so a rescheduled Beat pod doesn't miss or duplicate the nightly trigger.
+- **Workers autoscale 0→N with KEDA**, on its Redis queue-length scaler, rather than an always-on worker deployment sized for a job that only actually runs ~2h a night.
+- **The CMMS-calling queue is capped at one concurrent replica.** Celery's per-task `rate_limit` is enforced per worker, not globally across the fleet -- at this volume (50 req/min budget, three tasks a night) capping concurrency to one is simpler and sufficient, without needing a distributed token bucket.
+
+Celery is responsible for **when and in which order** work runs. It should not contain the detailed API retry/rate-limit logic -- that belongs in the sync service's own client layer, as it already does in the `pipeline/` prototype (`clients/cmms.py`).
 
 ---
 
@@ -132,6 +107,8 @@ planned actions
                            ▼    ▼
                         BLOCK  EXECUTE
 ```
+
+The ratio is evaluated at **two scopes, not one**: globally across the tenant, and per body/site. A single large but legitimate site closure could exceed 10% of the whole tenant while being entirely valid; conversely, data corruption confined to one small body could stay under a global 10% while still being wrong for that body specifically. Either scope breaching its threshold blocks the archive subset it covers; non-destructive work is unaffected either way.
 
 The archive safety check is evaluated before any destructive write is sent to the CMMS.
 
@@ -360,6 +337,8 @@ Run 2:
 
 Each execution has a `run_id`. Planned actions are stored with their status and outcome. For operations where the external API may time out after the server has committed the write, the client must re-read or use a business key before creating again; blindly retrying a non-idempotent POST is unsafe.
 
+Concretely, a create call must not treat every "already exists" response the same way: if it comes back for the exact code just submitted, on the first create attempt for that code this run, the client re-reads the asset to confirm it matches the intended state before deciding REJECTED versus SUCCESS/NOOP. A create that fails with "already exists" right after a network timeout usually means the *previous* attempt committed, not that there is a genuine naming conflict; the next run would self-correct once it recomputes desired state either way, but the current run's audit would misreport an idempotent success as a failure without this check.
+
 A durable command/audit store also provides replayability: failed commands can be retried without recomputing the entire world, provided the reconciliation state is still valid. The command record should carry the business key and intended state so the executor can re-read the target when a timeout occurs after an unknown write outcome.
 
 ---
@@ -495,28 +474,32 @@ Deployment should be automated through the existing GitLab CI/CD or equivalent p
 
 The current architecture is a valid batch-oriented design: Airbyte ingests the MDM, Snowflake/dbt performs reconciliation, Snowflake Tasks orchestrate the delta flow, Python UDFs call the CMMS and Celery completes the MDM-side import.
 
-I would **keep the warehouse-centric parts for data transformation, history and reconciliation**, but move the operational API integration out of Snowflake into a dedicated Python integration component.
+I would **keep the warehouse-centric parts for analytics and history, keep Celery as the orchestrator, and move the operational reconciliation and API integration out of Snowflake into a dedicated Python sync service.**
 
 ### What I would keep
 
-- **Snowflake + dbt:** raw/staging models, canonical models, historical data, reconciliation logic where SQL is the right abstraction.
-- **MDM PostgreSQL:** system of record for MDM-owned data.
-- **Key Vault:** secret management.
-- **Audit data:** durable, queryable operational history.
+- **Celery:** already Perenco's mechanism for scheduled/background work in MDAdmin (assumed, for this design, to serve other jobs there too -- otherwise see the trade-off below). Repointed at three new, independent tasks instead of the current five-step chain.
+- **Snowflake + dbt:** moved fully downstream, out of the operational path -- raw/staging models, canonical models, historical data (SCD2), analytics. Fed by Airbyte replicating two Postgres sources (MDM, the sync service's own audit/command store), not by the sync itself.
+- **MDM PostgreSQL:** system of record for MDM-owned data, read via a dedicated read replica rather than the primary.
+- **Key Vault:** secret management, accessed via managed identity rather than a stored credential.
+- **Audit data:** durable, queryable operational history -- now the sync service's own tables (`runs`/`actions`/`dq_issues`/`run_metrics`), independent of whatever triggers a run.
 
 ### What I would change
 
-- Replace Snowflake Python UDF-based API calls with a Python integration worker.
-- Use Airflow as the production orchestrator for scheduling, dependency management, retries, backfills and operational visibility.
-- Use a command/audit store as the boundary between planning and execution.
+- Replace Snowflake Python UDF-based API calls with a dedicated Python sync service (functional core + I/O shell, the same shape as the `pipeline/` sandbox prototype).
+- Repoint the existing Celery chain at this service's three independent task groups, rather than introducing a second orchestration mechanism purely for this integration.
+- Use a command/audit store (Postgres) as the boundary between planning and execution, decoupled from Snowflake so the sync never waits on the warehouse.
+- Route MDM writes (CMMS → MDM direction) through a Django management command inside MDAdmin's own process rather than writing into MDM's tables directly from the sync service -- preserves any model-level validation/signals MDAdmin's ORM would otherwise bypass, and mirrors the pattern the current Celery import step already uses.
 
 ### Trade-offs
 
-**Advantages:** clearer separation between analytics and operational integration, better control of API rate limits and retries, easier local testing, simpler replay and better observability of external-system failures.
+**Advantages:** clearer separation between analytics and operational integration, better control of API rate limits and retries, easier local testing, simpler replay, better observability of external-system failures, and no new orchestration technology to introduce or operate.
 
-**Costs:** one more deployable component and some additional infrastructure compared with keeping everything in Snowflake Tasks/UDFs.
+**Costs:** one more deployable component (the sync service itself) versus keeping everything in Snowflake Tasks/UDFs. Celery on Kubernetes also needs three specific things to work with the platform rather than against it: a Redis-backed Beat schedule (`celery-redbeat`, not the default file-based one, which loses state on pod restart), KEDA-based worker autoscaling (0→N on queue depth, so a job that runs ~2h a night doesn't pay for always-on workers), and a concurrency cap on the CMMS-calling queue (Celery's `rate_limit` is enforced per worker, not globally across the fleet).
 
-For the exercise sandbox, I would deliberately keep the implementation simpler and use DuckDB for analytical/reconciliation logic. The architectural boundary remains the same, so the prototype can be evolved toward the production Snowflake/Airflow setup without rewriting the business logic.
+**The one assumption this rests on:** that Celery already serves purposes in MDAdmin beyond this one chain. `DECISIONS.md` records the alternative if it doesn't -- Azure Container Apps Jobs on a cron trigger, no broker/worker/Beat infrastructure to operate at all, at the cost of native cross-task dependency management if requirements ever grow past three independent branches.
+
+For the exercise sandbox, I would deliberately keep the implementation simpler and use DuckDB for analytical/reconciliation logic. The architectural boundary remains the same, so the prototype can be evolved toward the production Celery/Snowflake setup without rewriting the business logic.
 
 ---
 

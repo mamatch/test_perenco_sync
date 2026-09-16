@@ -1,10 +1,18 @@
-"""Reference production DAG for the Perenco MDM <-> CMMS <-> IoT sync.
+"""Alternative production DAG for the Perenco MDM <-> CMMS <-> IoT sync -- NOT
+the recommended orchestrator.
+
+ARCHITECTURE_.md section 2 recommends repointing MDAdmin's existing Celery
+chain instead of introducing Airflow (see DECISIONS.md #12 for the one
+assumption that recommendation rests on: that Celery already serves other
+jobs at Perenco beyond this integration). This file is kept as the documented
+fallback -- what the same orchestration looks like as an Airflow DAG, for the
+day that assumption doesn't hold or requirements grow past three independent
+branches into something with real cross-task dependencies.
 
 NOT PART OF THE RUNNABLE SANDBOX. `make up` / `pipeline run-all` never import
 this file, and Airflow is not installed anywhere in this repo's dependencies.
-This is reference code only: what the ARCHITECTURE_.md section 2 orchestration
-diagram would actually look like as an Airflow DAG, kept here to be read and
-discussed rather than executed.
+This is reference code only, kept here to be read and discussed rather than
+executed.
 
 Why it isn't wired up and running (see the debrief prep notes): standing up a
 real Airflow instance (webserver + scheduler, its own metadata DB, a first-run

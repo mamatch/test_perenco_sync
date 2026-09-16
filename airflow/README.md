@@ -1,10 +1,20 @@
-# airflow/ — reference DAG, not part of the runnable sandbox
+# airflow/ — reference DAG, not the chosen orchestrator
 
-`dags/perenco_nightly_sync.py` is what the production orchestrator described in
-`ARCHITECTURE_.md` section 2 would look like as a real Airflow DAG: three
-independent tasks, each a thin call into the exact same, already-tested
-entrypoints `pipeline/pipeline/cli.py` uses (`mdm_to_cmms.run()`,
-`cmms_to_mdm.run()`, `iot_to_cmms.run()`) — no sync logic is duplicated here.
+**`ARCHITECTURE_.md` section 2 recommends repointing MDAdmin's existing Celery
+chain, not Airflow** — Perenco already runs Celery in production
+(`docs/01_context.md`), and introducing a second "how do we schedule
+background work" mechanism for one integration isn't justified if Celery
+already does other jobs there too (see `DECISIONS.md` #12 for the one
+assumption this rests on, and when it flips back the other way).
+
+`dags/perenco_nightly_sync.py` is kept as a **documented alternative**: what
+the same orchestration would look like as an Airflow DAG instead, if that
+assumption turns out to be wrong or the roadmap grows past three independent
+branches into something with real cross-task dependencies. Same principle as
+the Celery version — three independent tasks, each a thin call into the
+exact same, already-tested entrypoints `pipeline/pipeline/cli.py` uses
+(`mdm_to_cmms.run()`, `cmms_to_mdm.run()`, `iot_to_cmms.run()`) — no sync
+logic is duplicated here either.
 
 **This is not executed by `make up` or `pipeline run-all`, and Airflow is not
 one of this repo's dependencies.** That's deliberate, not an oversight — see

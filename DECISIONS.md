@@ -181,10 +181,37 @@ right rather than coincidentally plausible.
   not in a one-off HTML page).
 - **Cross-process rate limiting**: the CMMS client's rate limiter is per-process
   (`pipeline/pipeline/clients/cmms.py::_RateLimiter`), correct for this single-CLI
-  prototype; ARCHITECTURE_.md already calls out the shared-queue/worker-pool evolution
-  needed once several Airflow tasks call the CMMS concurrently in production.
+  prototype; ARCHITECTURE_.md section 2 describes the production fix (a concurrency cap on
+  the CMMS-calling Celery queue) needed once several workers can call the CMMS at once.
 - **Body/site reassignment**: if an existing platform's CMMS body drifted from the MDM's
   org unit, the sync reports it (name/parent are still propagated) but does not
   auto-reassign `bodyNames` on an existing asset -- moving a platform to a different site
   is an operationally heavier action than a rename, and the statement lists "orphans,
   suspicious cases" as things to report rather than silently fix.
+
+## 12. Orchestration: repoint Celery, on an unverified assumption
+
+`docs/01_context.md` documents exactly one Celery chain in MDAdmin -- this integration's
+own five-step legacy process -- and says nothing about whether Celery is used for anything
+else there. `ARCHITECTURE_.md` sections 2 and 11 commit to repointing that existing chain
+at three new, independent tasks rather than introducing Airflow, on the explicit assumption
+that Celery already serves other scheduled/background work in MDAdmin. If so, the broker,
+autoscaled workers and Beat singleton are a sunk, amortised cost, and adding three tasks to
+them is far cheaper than introducing and operating a second "how do we schedule background
+work" mechanism for one integration.
+
+**If that assumption is wrong** -- if this chain is the *only* thing Celery does in
+MDAdmin -- the calculus flips: keeping a whole distributed system (Redis broker, autoscaled
+workers, a singleton Beat pod, plus the Kubernetes-specific fixes in ARCHITECTURE_.md
+section 2 for Beat's schedule persistence and per-worker rate limiting) alive for three
+tasks that together run a few times a night is harder to justify than **Azure Container
+Apps Jobs on a cron trigger**: no broker, no worker fleet, no Beat singleton, native
+per-job retry policy, and execution history/logs through Azure Monitor without standing up
+anything extra. The cost of that alternative is no native cross-task dependency graph if
+requirements ever grow past three independent branches, and a "job never fired at all"
+failure mode that needs its own dead-man's-switch alert (a scheduled query checking for no
+successful execution in the last N hours), where a DAG-oriented tool would surface a
+missing run more passively.
+
+**Still open:** confirm with the MDAdmin team whether Celery is used for anything beyond
+this one chain before committing to either path in production.
