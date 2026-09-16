@@ -3,6 +3,12 @@
 Only non-secret defaults live here. The CMMS API key is read from the
 environment (CMMS_API_KEY) and never hard-coded or logged; in production it
 would be injected from Azure Key Vault into the container/task environment.
+
+All of these can be set in one place, `../.env` (repo root) -- see that file
+for the full list with explanations. It's loaded here before anything reads
+os.getenv, so a value set in .env behaves exactly like an exported shell
+variable; a real environment variable of the same name still wins (dotenv
+never overrides an already-set one).
 """
 
 from __future__ import annotations
@@ -11,7 +17,11 @@ import os
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from dotenv import load_dotenv
+
 REPO_ROOT = Path(__file__).resolve().parents[2]
+
+load_dotenv(REPO_ROOT / ".env")
 
 
 def _bool(name: str, default: bool) -> bool:

@@ -21,10 +21,12 @@ uv run python -m pipeline run iot-to-cmms
 uv run pytest -q                           # unit tests, no server needed
 ```
 
-Configuration is environment variables, all optional (defaults match the sandbox --
-see `pipeline/config.py`): `CMMS_BASE_URL`, `CMMS_TENANT`, `CMMS_API_KEY`,
-`SYSTEMREF_DB_PATH`, `SYSTEMREF_LITE_DIR`, `IOT_EXPORTS_DIR`, `AUDIT_DB_PATH`,
-`ARCHIVE_RATIO_THRESHOLD` (default `0.10`), `CMMS_RATE_LIMIT_PER_MINUTE` (default `50`).
+Configuration is environment variables, all optional and all collected in one place:
+`../.env` (repo root, loaded automatically by `pipeline/config.py`) -- edit values there
+instead of exporting shell variables. Defaults match the sandbox: `CMMS_BASE_URL`,
+`CMMS_TENANT`, `CMMS_API_KEY`, `SYSTEMREF_DB_PATH`, `SYSTEMREF_LITE_DIR`, `IOT_EXPORTS_DIR`,
+`AUDIT_DB_PATH`, `ARCHIVE_RATIO_THRESHOLD` (default `0.10`), `CMMS_RATE_LIMIT_PER_MINUTE`
+(default `50`). An actual exported environment variable always wins over `.env`.
 The MDM active-scope rule (`date_start <= as_of and (date_end is null or date_end > as_of)`)
 is fixed, not configurable -- see DECISIONS.md #1.
 

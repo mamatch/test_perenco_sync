@@ -4,6 +4,7 @@ version = "0.1.0"
 description = "MDM <-> CMMS <-> IoT historian synchronisation (data engineering exercise)"
 requires-python = ">=3.12"
 dependencies = [
+    "python-dotenv>=1.2.3",
     "requests>=2.32",
 ]
 
