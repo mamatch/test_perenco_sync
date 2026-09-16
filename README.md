@@ -1,3 +1,20 @@
+> ## Candidate solution — start here
+>
+> This is the original exercise brief, kept as received below. My submission:
+>
+> - **[`ARCHITECTURE_.md`](ARCHITECTURE_.md)** — Part A, including the clarification-call
+>   questions and how each answer shaped the design (section 12).
+> - **[`pipeline/`](pipeline/README.md)** — Parts B/C/D: the working, tested sync. Run it with
+>   `make sync` (see below) or `cd pipeline && uv run python -m pipeline run-all`.
+> - **[`DECISIONS.md`](DECISIONS.md)** — assumptions made against real sandbox data, and the
+>   questions the clarification call left open.
+> - **[`airflow/`](airflow/README.md)** — a reference (not executed) Airflow DAG for the
+>   production orchestration described in `ARCHITECTURE_.md` section 2.
+>
+> `make up && make sync` runs the whole thing end to end against a fresh sandbox.
+
+---
+
 # Data Engineering Architect — technical exercise
 
 **Perenco Data Office · MDM ⇄ CMMS synchronisation**

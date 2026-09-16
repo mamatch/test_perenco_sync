@@ -520,16 +520,36 @@ For the exercise sandbox, I would deliberately keep the implementation simpler a
 
 ---
 
-## 12. Decisions confirmed during clarification
+## 12. Questions asked during the clarification call, and how the answers shaped the design
 
-The following were confirmed after the clarification call:
+The statement is deliberately incomplete in several places; these are the questions I brought to the call, the answer confirmed, and the concrete effect each answer had on the design below. (Questions the call did **not** fully resolve, and assumptions made in their absence, are in `DECISIONS.md`.)
 
-1. **Active MDM scope:** `date_start <= now()` and (`date_end` is null or `date_end > now()`), consistent timezone throughout. The inverted end-date wording in an earlier transcription of the clarification call was a transcription error, now corrected -- implemented as the sole rule, with boundary cases tested.
-2. **10% archive threshold:** hard stop **for destructive/archive actions only**; non-destructive work may continue.
-3. **Active descendants:** detection is **recursive**.
-4. **CMMS → MDM:** full reconciliation, including disappeared/archived Systems and Equipments, not only upserts.
-5. **Historian → CMMS mapping:** deterministic tag-to-equipment-code convention based on country code + equipment code + `.RUN_HRS`.
-6. **Daily running hours:** select the reading with the **maximum timestamp** for the day.
-7. **Counter resets / no GOOD:** engineering decision; this design conservatively quarantines counter regressions and does not fabricate a value when no GOOD reading exists.
+1. **Q: The statement doesn't define "active" for a platform/section. Given `date_start`/`date_end` on `SystemUnit`, what exact rule puts an entity in scope?**
+   A: `date_start <= now()` and (`date_end` is null or `date_end > now()`), one consistent timezone. (An earlier transcription of the call had the end-date condition inverted -- confirmed as a transcription error, not the real rule.)
+   Impact: this single predicate gates every CREATE/ARCHIVE decision in Integration 1 -- a sign error here would silently invert which platforms are in scope, so it's centralised in one function (`is_active()`) and boundary-tested rather than inlined at each call site.
 
-These decisions are recorded in `DECISIONS.md` with examples and test cases.
+2. **Q: Is the 10% archive-ratio guardrail a hard stop on the whole run, or only on destructive (archive) actions?**
+   A: destructive actions only; CREATE/UPDATE work continues.
+   Impact: shaped the safety-rail architecture directly -- the plan is computed in full first, then only the ARCHIVE subset is filtered by the ratio check, so a batch that's mostly legitimate creates/updates is never held hostage by a handful of stale archive candidates.
+
+3. **Q: "Never archive something that still has active children" -- is that check one level deep (immediate children), or does it need to look further down the hierarchy?**
+   A: recursive, any depth.
+   Impact: required pulling the *full* active asset tree (every family, not just PLATFORM/SECTION) so an active Equipment several hops down a Section still blocks archiving the Platform above it -- and, found by testing rather than by the call, required resolving candidates deepest-first so a platform and its only section can still be archived together in the same run (see `DECISIONS.md` #3).
+
+4. **Q: Is the CMMS → MDM direction an upsert-only feed, or does it need to reconcile Systems/Equipments that disappeared or got archived in the CMMS?**
+   A: full reconciliation.
+   Impact: added the "disappeared from the CMMS" pass that decommissions (`date_end`) any MDM System/Equipment no longer reported by the CMMS at all -- a plain upsert loop would have left stale rows open forever.
+
+5. **Q: The historian tag convention (`<country>-<platform>.<suffix>.RUN_HRS`) is given as one example, not a formal grammar -- what exactly determines the target asset?**
+   A: a deterministic tag-to-equipment-code convention based on country code + equipment code.
+   Impact: became the primary branch of the tag-resolution function (`<platform>-<suffix>` as a direct CMMS asset code). The one case that convention alone doesn't cover -- a platform's single aggregate system addressed by class shorthand instead of an individual equipment tag -- wasn't something the call anticipated either; it was found by matching real historian values against a pre-existing CMMS meter (`DECISIONS.md` #8), which is exactly the kind of gap this call format is meant to surface early but didn't catch here.
+
+6. **Q: When several readings exist for the same asset/day, is the one to keep the maximum *value*, or the one at the latest *timestamp*?**
+   A: the reading at the maximum timestamp.
+   Impact: directly shaped `daily_max_timestamp_readings()` -- the intuitive-but-wrong implementation (max value) would have silently accepted a spurious high outlier over the actual latest sensor reading.
+
+7. **Q: What should happen when a counter appears to decrease, or no GOOD reading exists for a day -- repair it automatically, or leave it to engineering judgement?**
+   A: engineering judgement; the business did not mandate an automatic fix.
+   Impact: led to the conservative quarantine policy (never infer a new baseline, never fabricate a value), which then held up against two independent real cases found in the sandbox: an inflated CMMS seed value that would otherwise have masked genuine data, and a real counter reset that needs a human to acknowledge before the baseline can move again.
+
+These answers are recorded again, alongside the sandbox evidence for each, in `DECISIONS.md`.

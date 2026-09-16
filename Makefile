@@ -1,7 +1,7 @@
 # Convenience targets. Docker is the recommended path for candidates; the "local-*"
 # targets run the same services with uv on the host.
 
-.PHONY: up down reset logs seeds answer-key archive test local-cmms local-mdm local-mdm-seed
+.PHONY: up down reset logs seeds answer-key archive test local-cmms local-mdm local-mdm-seed sync
 
 up:            ## start the CMMS mock and the MDM (Docker)
 	docker compose up -d --build
@@ -39,3 +39,6 @@ local-mdm-seed:
 
 local-mdm:     ## run the MDM without Docker (after local-mdm-seed)
 	cd systemref_lite && uv run manage.py runserver 8000
+
+sync:          ## candidate solution: run the MDM<->CMMS<->IoT sync against a running sandbox
+	cd pipeline && uv sync && uv run python -m pipeline run-all
