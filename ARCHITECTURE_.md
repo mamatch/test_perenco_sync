@@ -25,41 +25,7 @@ The design is based on six principles:
 
 ## 2. Target production architecture
 
-```text
-┌──────────────────────┐        ┌───────────────────────────┐
-│   IoT historian       │        │          MDAdmin            │
-│ daily running-hours   │        │   Django + PostgreSQL        │
-│ CSV / landing zone    │        │ (existing, unchanged)         │
-└──────────┬─────────────┘        └──────────┬──────────────────┘
-           │                                  │ read replica
-           │                                  ▼
-           │                      ┌───────────────────────────┐
-           │                      │   MDM read replica          │
-           │                      │   read-only role             │
-           │                      └──────────┬──────────────────┘
-           │                                 │ read
-           │                                 │
-           ▼                                 ▼
-     ┌─────────────────────────────────────────────────────┐
-     │                 Sync service (Python)                 │
-     │  functional core (pure delta) + I/O shell               │
-     │  mdm_to_cmms / cmms_to_mdm / iot_to_cmms                  │
-     └───────┬─────────────────────┬─────────────┬───────────┘
-             │                     │             │
-        REST │               write │        plan + audit │
-             ▼                     ▼             ▼
-     ┌──────────────┐   ┌────────────────────┐ ┌──────────────────┐
-     │   CMMS API    │   │ MDAdmin management  │ │ Command / audit    │
-     │ (DIMO Maint)  │   │ command (Django)      │ │ store (PostgreSQL)  │
-     └──────────────┘   └────────────────────┘ └──────────────────┘
-
-     Celery (MDAdmin's existing chain, repointed) triggers the sync
-     service's three independent task groups nightly.
-
-     Snowflake / dbt / Airbyte replicate MDM PostgreSQL and the
-     audit store downstream, for analytics/history only --
-     never on this operational path.
-```
+![Architecture](./images/architecture.png)
 
 ### Why Celery, not a new orchestrator
 
@@ -96,17 +62,7 @@ An MDM object is active when `date_start <= now()` and `date_end` is null or `> 
 
 The 10% archive threshold is a **hard stop for destructive actions only**. Therefore a run may continue with non-destructive CREATE/UPDATE operations while ARCHIVE operations are blocked when the threshold is exceeded.
 
-```text
-planned actions
-      │
-      ├── CREATE / UPDATE ────────► eligible for execution
-      │
-      └── ARCHIVE ──► archive ratio > 10% ?
-                           │
-                      yes  │  no
-                           ▼    ▼
-                        BLOCK  EXECUTE
-```
+![Destructive-action policy](./images/destruction_policy.png)
 
 The ratio is evaluated at **two scopes, not one**: globally across the tenant, and per body/site. A single large but legitimate site closure could exceed 10% of the whole tenant while being entirely valid; conversely, data corruption confined to one small body could stay under a global 10% while still being wrong for that body specifically. Either scope breaching its threshold blocks the archive subset it covers; non-destructive work is unaffected either way.
 
@@ -127,34 +83,7 @@ Sites/bodies already exist in the CMMS and are not created by the connector.
 
 ### Flow
 
-```text
-MDM snapshot
-    │
-    ▼
-Validate snapshot
-    │
-    ▼
-Build desired state
-    │
-    ├───────────────┐
-    ▼               ▼
-Current CMMS     MDM state
-    │               │
-    └──────┬────────┘
-           ▼
-      Delta planner
-           │
-    ┌──────┼───────────┐
-    ▼      ▼           ▼
- CREATE  UPDATE     ARCHIVE
-    │      │           │
-    └──────┼───────────┘
-           ▼
-      safety checks
-           │
-           ▼
-        executor
-```
+![MDM to CMMS](./images/mdm_to_cmms.png)
 
 ### Delta rules
 
@@ -217,27 +146,7 @@ The CMMS owns operational Systems and Equipments. The MDM must reflect them with
 
 ### Flow
 
-```text
-CMMS assets
-    │
-    ▼
-Normalize into canonical model
-    │
-    ▼
-Resolve platform / section / system parents
-    │
-    ▼
-Validate governed reference data
-    │
-    ├───────────────┐
-    │ valid         │ invalid
-    ▼               ▼
-Delta planner     REJECTED
-    │               │
-    ▼               └── audit + data-quality feedback
-MDM writes
-```
-
+![CMMS to MDM](./images/cmms_to_mdm.png)
 ### Reference-data rule
 
 
@@ -265,36 +174,7 @@ Observed data cases in the sandbox include an orphan Equipment, an invalid Syste
 
 The historian is authoritative for cumulative running hours.
 
-```text
-Daily CSV exports
-      │
-      ▼
-Parse + normalize
-      │
-      ▼
-Deduplicate on (tag_id, timestamp_utc)
-      │
-      ▼
-Identify RUN_HRS measurements
-      │
-      ▼
-Resolve historian tag → CMMS asset
-      │
-      ▼
-Filter to GOOD measurements
-      │
-      ▼
-Group by asset + UTC day
-      │
-      ▼
-Select row with MAX timestamp
-      │
-      ▼
-Detect counter regression
-      │
-      ├── normal ─────────────► MeterUpdate
-      └── regression ─────────► quarantine/audit, no automatic update
-```
+![IOT to CMMS](./images/iot_to_cmms.png)
 
 ### Mapping
 
