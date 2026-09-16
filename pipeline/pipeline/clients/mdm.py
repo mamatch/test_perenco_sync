@@ -81,10 +81,17 @@ class MdmClient:
         ).fetchall()
 
         platforms: list[DesiredPlatform] = []
+        # unit_active/unit_code are keyed by system_unit.id so the section pass
+        # below can look up "is this section's platform active?" without a
+        # second query per section.
         unit_active: dict[int, bool] = {}
         unit_code: dict[int, str] = {}
         for r in rows:
             active = is_active(_to_date(r["date_start"]), _to_date(r["date_end"]), as_of)
+            # a system unit is only really "active" if its own date window says
+            # so *and* the org unit it belongs to is an active field -- a data
+            # quality issue is raised (not silently corrected) when the dates
+            # say active but the org unit disagrees.
             if active and not (r["is_field"] and r["org_active"]):
                 issues.append(
                     {
@@ -113,6 +120,9 @@ class MdmClient:
         for r in srows:
             unit_id = r["system_unit_id"]
             platform_active = unit_active.get(unit_id, False)
+            # a section can only be active if its own assignment window says so
+            # AND its parent platform is active -- an inactive platform always
+            # drags its sections down with it, regardless of the section's own dates.
             section_active = platform_active and is_active(
                 _to_date(r["date_start"]), _to_date(r["date_end"]), as_of
             )

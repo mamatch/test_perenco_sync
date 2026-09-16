@@ -91,6 +91,11 @@ def run(cmms: CmmsClient, mdm: MdmClient, audit: AuditStore, settings: Settings,
         pending: list[ActionRecord] = []
 
         # -- Systems --------------------------------------------------------
+        # For each CMMS system: walk up to its section then its platform,
+        # resolving every piece against MDM's *governed* reference data
+        # (system_unit/section_category/system_class). Any link that doesn't
+        # resolve is a hard rejection -- this sync never invents governed
+        # reference data on the fly, it only reports the gap (DECISIONS.md).
         for code, sys_asset in systems.items():
             section = assets.get(sys_asset.parent_code) if sys_asset.parent_code else None
             if section is None:
@@ -114,6 +119,9 @@ def run(cmms: CmmsClient, mdm: MdmClient, audit: AuditStore, settings: Settings,
                 _reject(audit, run_id, "SYSTEM", code, "unknown_platform_in_mdm", f"platform '{platform_code}' is not a known MDM system unit")
                 rejected_systems.add(code)
                 continue
+            # CMMS section codes are "<platform_code>_<section_suffix>" (e.g. "JNR_PG"
+            # under platform "JNR"); strip the platform prefix to get the suffix MDM
+            # keys its governed section categories by.
             suffix = section.code[len(platform_code) + 1 :] if section.code.startswith(platform_code + "_") else None
             section_category = mdm.section_category_by_code(suffix) if suffix else None
             if section_category is None:
@@ -123,6 +131,8 @@ def run(cmms: CmmsClient, mdm: MdmClient, audit: AuditStore, settings: Settings,
                 )
                 rejected_systems.add(code)
                 continue
+            # CMMS system family is "SYS_<class_code>" (e.g. "SYS_PG"); strip
+            # the "SYS_" prefix to get the governed system class code.
             class_code = (sys_asset.family or "")[4:]
             system_class = mdm.system_class_by_code(class_code)
             if system_class is None:
@@ -130,6 +140,7 @@ def run(cmms: CmmsClient, mdm: MdmClient, audit: AuditStore, settings: Settings,
                 rejected_systems.add(code)
                 continue
 
+            # Criticality (PC/SCE) maps to a governed MDM attribute, when recognised.
             attribute_names: set[str] = set()
             if sys_asset.criticality_code:
                 attr_name = CRITICALITY_TO_ATTRIBUTE.get(sys_asset.criticality_code)
@@ -142,9 +153,11 @@ def run(cmms: CmmsClient, mdm: MdmClient, audit: AuditStore, settings: Settings,
                     )
 
             date_start = _date_only(sys_asset.in_service_date)
-            date_end = today if sys_asset.archived else None
+            date_end = today if sys_asset.archived else None  # archived in CMMS -> close the MDM record as of today
             existing = mdm.system_by_code(code)
             current_attrs = mdm.system_attribute_names(existing["id"]) if existing else set()
+            # Diff against the current MDM row field by field; only write when
+            # something actually differs (keeps NOOP runs genuinely no-op).
             changed = existing is None or (
                 existing["tag"] != sys_asset.name
                 or existing["section_id"] != section_category["id"]
@@ -156,6 +169,10 @@ def run(cmms: CmmsClient, mdm: MdmClient, audit: AuditStore, settings: Settings,
             )
 
             if changed:
+                # Don't write yet -- just queue it on the plan. `pending` mirrors
+                # the plan so it can be turned into audit rows once we know
+                # whether the whole batch actually got applied (see bottom of
+                # this function).
                 plan.upsert_system(
                     code=code,
                     tag=sys_asset.name,
@@ -172,6 +189,8 @@ def run(cmms: CmmsClient, mdm: MdmClient, audit: AuditStore, settings: Settings,
                 audit.record_action(run_id, ActionRecord("CMMS", "MDM", "SYSTEM", code, "NOOP", "SUCCESS"))
 
         # -- Equipments -------------------------------------------------------
+        # Same idea as systems: resolve governed reference data (equipment_type),
+        # reject what doesn't resolve, and queue upserts/assignments on the plan.
         for code, eq_asset in equipments.items():
             parent = assets.get(eq_asset.parent_code) if eq_asset.parent_code else None
             if parent is None:
@@ -199,6 +218,9 @@ def run(cmms: CmmsClient, mdm: MdmClient, audit: AuditStore, settings: Settings,
             )
             assignment_exists = mdm.system_equipment_assignment_exists(parent.code, code)
 
+            # An equipment can need an upsert, a new system assignment, both, or
+            # neither -- `recorded` just makes sure exactly one audit row is
+            # written per equipment regardless of which combination applies.
             recorded = False
             if changed:
                 plan.upsert_equipment(code=code, name=eq_asset.name, equipment_type_code=eq_asset.family, date_start=date_start, date_end=date_end)
@@ -213,6 +235,9 @@ def run(cmms: CmmsClient, mdm: MdmClient, audit: AuditStore, settings: Settings,
                 audit.record_action(run_id, ActionRecord("CMMS", "MDM", "EQUIPMENT", code, "NOOP", "SUCCESS"))
 
         # -- Disappeared: MDM knows a System/Equipment that CMMS no longer reports at all ---
+        # This is the "full reconciliation, not upsert-only" half of the flow:
+        # anything still open (date_end IS NULL) in MDM but absent from this
+        # CMMS extraction entirely (not even archived=True) gets closed too.
         seen_codes = set(assets.keys())
         for row in mdm.conn.execute("SELECT code FROM systemref_system WHERE date_end IS NULL").fetchall():
             if row["code"] not in seen_codes:
@@ -226,6 +251,10 @@ def run(cmms: CmmsClient, mdm: MdmClient, audit: AuditStore, settings: Settings,
                 audit.record_dq_issue(run_id, "cmms_to_mdm", "EQUIPMENT", row["code"], "disappeared_from_cmms", "no longer reported by the CMMS connector (active or archived)")
 
         # -- Apply the plan inside MDAdmin's own process -----------------------
+        # Everything queued above is written in one shot here: either the whole
+        # plan lands (and every `pending` record is audited as SUCCESS), or the
+        # Django-side transaction fails as a whole (and every `pending` record
+        # is instead audited as FAILED_RETRYABLE) -- never a partial write.
         if not plan.is_empty():
             try:
                 summary = apply_plan(plan, settings.systemref_lite_dir, settings.mdm_db_path)

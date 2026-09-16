@@ -44,10 +44,13 @@ def _current_tree(cmms: CmmsClient) -> tuple[dict[str, CurrentAsset], dict[str, 
             )
         )
 
+    # Start from the active platforms/sections already fetched above...
     current_platforms_sections: dict[str, CurrentAsset] = {
         a.code: a for a in active_all if a.family in STRUCTURAL_FAMILIES
     }
 
+    # ...then fetch archived=True separately and merge it in, since a single
+    # Asset/Filter call can only ever return one side (active or archived).
     for family in ("PLATFORM", "SECTION"):
         for a in cmms.iter_assets(archived=True, assetFamilyCode=family):
             current_platforms_sections[a["code"]] = CurrentAsset(
@@ -108,6 +111,11 @@ def run(cmms: CmmsClient, mdm: MdmClient, audit: AuditStore, settings: Settings,
                 f"threshold: all {safety['archive_eligible']} destructive action(s) blocked this run.",
             )
 
+        # `plan` (from compute_plan) is already ordered: creates/updates/
+        # unarchives parent-first, archives child-first. `failed_parents`
+        # tracks codes whose own CREATE/UNARCHIVE failed this run, so their
+        # children are rejected immediately instead of being sent to the CMMS
+        # against a parent that doesn't actually exist there yet.
         failed_parents: set[str] = set()
 
         for item in plan:
@@ -118,6 +126,8 @@ def run(cmms: CmmsClient, mdm: MdmClient, audit: AuditStore, settings: Settings,
                 continue
 
             if item.action == "BLOCKED":
+                # Safety rail already vetoed this one in compute_plan (active
+                # descendant, or ratio threshold) -- just record it, never call the CMMS.
                 audit.record_action(
                     run_id, ActionRecord("MDM", "CMMS", item.entity_type, item.code, "ARCHIVE", "BLOCKED", item.reason, item.payload)
                 )
@@ -129,7 +139,7 @@ def run(cmms: CmmsClient, mdm: MdmClient, audit: AuditStore, settings: Settings,
                     run_id,
                     ActionRecord("MDM", "CMMS", item.entity_type, item.code, item.action, "REJECTED", f"parent '{item.parent_code}' action failed this run", item.payload),
                 )
-                failed_parents.add(item.code)
+                failed_parents.add(item.code)  # propagate: this code's own children get rejected too
                 continue
 
             try:
@@ -151,6 +161,8 @@ def run(cmms: CmmsClient, mdm: MdmClient, audit: AuditStore, settings: Settings,
                 )
                 audit.record_dq_issue(run_id, "mdm_to_cmms", item.entity_type, item.code, "cmms_rejected", exc.messages)
                 if item.action in ("CREATE", "UNARCHIVE"):
+                    # this code doesn't exist (or isn't active) in the CMMS after all
+                    # -> any child queued to attach under it must be rejected too.
                     failed_parents.add(item.code)
             except CmmsNotFound as exc:
                 audit.record_action(

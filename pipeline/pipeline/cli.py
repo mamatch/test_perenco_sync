@@ -36,6 +36,10 @@ def _make_clients(settings):
 
 
 def _run_one(name: str) -> str:
+    """Builds fresh clients (one CmmsClient, one AuditStore, one MdmClient
+    where needed) and dispatches to the matching integration's run(). Each
+    integration owns its own MdmClient connection so mdm_to_cmms and
+    cmms_to_mdm never share one across runs."""
     settings = get_settings()
     cmms, audit = _make_clients(settings)
     if name == "mdm-to-cmms":
@@ -49,6 +53,9 @@ def _run_one(name: str) -> str:
     else:
         raise ValueError(name)
 
+    # health_summary/evaluate_alerts read back from the audit store what the
+    # run itself just wrote -- this is Part C's "observability", printed
+    # after every run rather than requiring a separate dashboard to see it.
     print(health_summary(audit, run_id))
     for alert in evaluate_alerts(audit, run_id, settings):
         print(f"ALERT[{alert.severity}] {alert.message}")

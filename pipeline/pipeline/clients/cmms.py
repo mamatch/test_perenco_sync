@@ -62,13 +62,18 @@ class _RateLimiter:
         self._lock = threading.Lock()
 
     def acquire(self) -> None:
+        """Call before every HTTP request. Blocks just long enough to keep the
+        last 60s of calls under `per_minute` (sliding window, not a fixed
+        per-minute bucket that resets on the clock)."""
         if self.per_minute <= 0:
             return
         with self._lock:
             now = time.monotonic()
+            # drop timestamps older than the 60s window
             while self._events and now - self._events[0] > 60:
                 self._events.popleft()
             if len(self._events) >= self.per_minute:
+                # window is full: sleep until the oldest call falls out of it
                 sleep_for = 60 - (now - self._events[0]) + 0.05
                 time.sleep(max(sleep_for, 0))
                 now = time.monotonic()
@@ -105,9 +110,9 @@ class CmmsClient:
     def _request(self, method: str, path: str, *, json: dict | None = None, params: dict | None = None) -> Any:
         url = self._url(path)
         attempt = 0
-        while True:
+        while True:  # retry loop: only 429/5xx/network errors loop back here
             attempt += 1
-            self._limiter.acquire()
+            self._limiter.acquire()  # may sleep to respect the per-minute budget
             try:
                 resp = self.session.request(
                     method,
@@ -118,6 +123,8 @@ class CmmsClient:
                     timeout=self.timeout,
                 )
             except requests.RequestException as exc:
+                # connection/timeout errors: treated the same as a transient
+                # server failure, retried with backoff up to max_retries.
                 if attempt > self.max_retries:
                     raise CmmsUnavailable(0, [f"network error after {attempt} attempts: {exc}"]) from exc
                 self._backoff_sleep(attempt)
@@ -131,6 +138,7 @@ class CmmsClient:
 
             messages = _safe_messages(resp)
 
+            # Business/programming errors: never retried, always surfaced to the caller.
             if resp.status_code == 401:
                 raise CmmsAuthError(401, messages)
             if resp.status_code == 404:
@@ -139,6 +147,8 @@ class CmmsClient:
                 raise CmmsValidationError(406, messages)
 
             if resp.status_code == 429:
+                # rate limited server-side despite our own limiter (e.g. another
+                # process sharing the tenant budget): honour Retry-After if given.
                 if attempt > self.max_retries:
                     raise CmmsUnavailable(429, messages)
                 retry_after = float(resp.headers.get("Retry-After", 2 * attempt))
@@ -148,6 +158,8 @@ class CmmsClient:
                 continue
 
             if resp.status_code in (500, 503):
+                # transient server failure (the mock injects ~3% of these on
+                # purpose) -- retried with exponential backoff + jitter.
                 if attempt > self.max_retries:
                     raise CmmsUnavailable(resp.status_code, messages)
                 self._backoff_sleep(attempt)
@@ -168,6 +180,9 @@ class CmmsClient:
         return self._request("POST", "Asset/Filter", json=body)
 
     def iter_assets(self, page_size: int = 1000, **filters: Any) -> Iterator[dict]:
+        """Pages through Asset/Filter until a short page (fewer rows than
+        page_size) signals the last one. Callers pass archived=True/False
+        explicitly since Asset/Filter never returns that field either way."""
         page = 1
         while True:
             rows = self.filter_assets_page(current_page=page, page_size=page_size, **filters)

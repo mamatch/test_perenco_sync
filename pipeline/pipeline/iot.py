@@ -112,16 +112,25 @@ def resolve_tag(tag_id: str, assets_by_code: dict[str, AssetRef]) -> tuple[str |
     parts = body.split(".")
     if len(parts) != 2:
         return None, "malformed_tag_id"
+    # e.g. tag_id "GA-JNR.PG.RUN_HRS" -> country_platform="GA-JNR", suffix="PG"
     country_platform, suffix = parts
     if len(country_platform) < 4 or country_platform[2] != "-":
         return None, "malformed_tag_id"
-    platform_code = country_platform[3:]
+    platform_code = country_platform[3:]  # "GA-JNR" -> "JNR"
 
+    # Attempt 1: direct equipment-code match, e.g. platform "JNR" + suffix "PG"
+    # -> candidate equipment code "JNR-PG". Excludes PLATFORM/SECTION codes:
+    # those can collide with an equipment-style code but are never the target.
     candidate = f"{platform_code}-{suffix}"
     asset = assets_by_code.get(candidate)
     if asset is not None and asset.family not in STRUCTURAL_FAMILIES:
         return asset.code, ""
 
+    # Attempt 2 (fallback): the historian sometimes addresses a whole system
+    # class rather than one equipment tag, e.g. "GA-JNR.PG" really means "the
+    # power-generation SYSTEM under platform JNR" (family "SYS_PG"). Only
+    # resolve this way if exactly one such system exists under that platform
+    # -- more than one is ambiguous and must be quarantined, not guessed.
     system_family = f"SYS_{suffix}"
     matches = [
         a
@@ -136,6 +145,9 @@ def resolve_tag(tag_id: str, assets_by_code: dict[str, AssetRef]) -> tuple[str |
 
 
 def _is_under_platform(asset: AssetRef, platform_code: str, assets_by_code: dict[str, AssetRef]) -> bool:
+    """Walks parent_code links upward until it either finds platform_code or
+    runs out of parents. `seen` guards against an (unexpected) cycle in the
+    CMMS tree turning this into an infinite loop."""
     code = asset.parent_code
     seen = set()
     while code and code not in seen:

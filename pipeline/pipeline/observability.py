@@ -19,6 +19,10 @@ class Alert:
 
 
 def evaluate_alerts(audit: AuditStore, run_id: str, settings) -> list[Alert]:
+    """Two kinds of alerts, deliberately combined here: alerts already written
+    to the DB *during* the run (e.g. the archive-ratio breach, raised right
+    where it's detected in canonical.py/mdm_to_cmms.py), plus a few more
+    computed after the fact just by reading back what the run recorded."""
     alerts: list[Alert] = []
     rows = audit.conn.execute("SELECT severity, message FROM alerts WHERE run_id=?", (run_id,)).fetchall()
     alerts.extend(Alert(r["severity"], r["message"]) for r in rows)
@@ -27,7 +31,7 @@ def evaluate_alerts(audit: AuditStore, run_id: str, settings) -> list[Alert]:
     total_actions = sum(counts.values())
     rejected = sum(v for k, v in counts.items() if k.endswith(":REJECTED"))
     failed = sum(v for k, v in counts.items() if k.endswith(":FAILED_RETRYABLE"))
-    if total_actions and (rejected + failed) / total_actions > 0.20:
+    if total_actions and (rejected + failed) / total_actions > 0.20:  # 20%: arbitrary but documented threshold
         alerts.append(Alert("WARNING", f"{rejected + failed}/{total_actions} actions ({(rejected + failed) / total_actions:.0%}) were rejected or failed this run."))
 
     dq = audit.dq_issue_counts(run_id)

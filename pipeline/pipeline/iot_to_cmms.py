@@ -48,6 +48,10 @@ def run(cmms: CmmsClient, audit: AuditStore, settings: Settings, run_id: str | N
 
         assets, archived_codes = _pull_assets(cmms)
 
+        # Resolve each distinct tag_id to a CMMS asset code once (cached),
+        # convert its unit to hours, and group the surviving rows by asset --
+        # everything downstream (daily selection, regression check, sending)
+        # operates per asset, one meter stream at a time.
         resolution_cache: dict[str, tuple[str | None, str]] = {}
         rows_by_asset: dict[str, list[IotRow]] = {}
         for row in rows:
@@ -75,6 +79,11 @@ def run(cmms: CmmsClient, audit: AuditStore, settings: Settings, run_id: str | N
         sent = rejected = quarantined_regression = no_good = 0
 
         for asset_code, asset_rows in rows_by_asset.items():
+            # `days_with_data` is every day that has at least one row (any
+            # quality); `selected` (from daily_max_timestamp_readings) is only
+            # the GOOD-quality, max-timestamp reading per day. The gap between
+            # the two -- a day with data but nothing GOOD -- is its own
+            # data-quality issue, flagged below before we even look at values.
             days_with_data: dict[date, list[IotRow]] = {}
             for r in asset_rows:
                 days_with_data.setdefault(r.timestamp_utc.date(), []).append(r)
@@ -85,17 +94,25 @@ def run(cmms: CmmsClient, audit: AuditStore, settings: Settings, run_id: str | N
                     audit.record_dq_issue(run_id, "iot_to_cmms", "METER", asset_code, "no_good_reading_for_day", {"day": day.isoformat(), "rows": len(day_rows)})
                     no_good += 1
 
+            # Counter-regression baseline: what we last actually sent for this
+            # asset (from our own idempotency store), falling back to the
+            # CMMS's current meter value on a fresh asset we've never sent to.
             baseline = _baseline_value(cmms, audit, asset_code)
 
-            for day in sorted(selected):
+            for day in sorted(selected):  # walk days in order so `baseline` advances monotonically
                 reading = selected[day]
                 value_int = round(reading.value)
                 already = audit.sent_for_day(asset_code, day.isoformat())
                 if already is not None and already["value"] == value_int:
+                    # idempotency: this exact (asset, day, value) was already
+                    # accepted in a previous run -- do nothing, just record it.
                     audit.record_action(run_id, ActionRecord("IOT", "CMMS", "METER", asset_code, "NOOP", "SUCCESS", f"day {day} already sent with value {value_int}"))
                     baseline = value_int
                     continue
                 if baseline is not None and value_int < baseline:
+                    # a cumulative running-hours counter should never go down;
+                    # quarantine instead of sending a value that would corrupt
+                    # the CMMS's own meter history.
                     audit.record_dq_issue(
                         run_id, "iot_to_cmms", "METER", asset_code, "counter_regression",
                         {"day": day.isoformat(), "value": value_int, "previous": baseline, "tag_id": reading.tag_id},
@@ -127,6 +144,10 @@ def run(cmms: CmmsClient, audit: AuditStore, settings: Settings, run_id: str | N
 
 
 def _baseline_value(cmms: CmmsClient, audit: AuditStore, asset_code: str) -> int | None:
+    """Prefer our own idempotency store (what we ourselves last sent) over the
+    CMMS's live value, so a regression is judged against our own history even
+    if the CMMS value was independently edited. Only falls back to asking the
+    CMMS directly the first time we ever touch this asset's meter."""
     last = audit.last_sent_meter(asset_code)
     if last is not None:
         return int(last["value"])

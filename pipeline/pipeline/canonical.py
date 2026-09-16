@@ -98,12 +98,19 @@ def compute_plan(
     plan: list[PlannedAction] = []
     archive_candidates: list[PlannedAction] = []
 
+    # Pass 1: walk the MDM-desired side. For every platform/section that MDM
+    # says should currently exist, compare it to what the CMMS has today and
+    # decide CREATE / UNARCHIVE / UPDATE / NOOP. Anything MDM says is *not*
+    # active right now is skipped here and picked up in pass 2 instead, from
+    # the CMMS side (that's the only way to notice "CMMS still has it, MDM
+    # doesn't want it anymore" -> archive candidate).
     for d in desired:
         cur = current_platforms_sections.get(d.code)
         entity_type = d.family
         if not d.active:
             continue  # handled below, from the CMMS side, as a potential archive candidate
         if cur is None:
+            # MDM wants it, CMMS has never heard of it -> create it.
             plan.append(
                 PlannedAction(
                     entity_type,
@@ -123,12 +130,16 @@ def compute_plan(
             )
             continue
 
+        # It already exists in the CMMS: figure out what (if anything) changed
+        # so we only send the fields that actually differ, not a full payload.
         diff: dict = {}
         if cur.name != d.name:
             diff["assetName"] = d.name
         if d.parent_code is not None and cur.parent_code != d.parent_code:
             diff["parentCode"] = d.parent_code
         if cur.archived:
+            # It's active again in MDM but still archived in the CMMS -> bring it back
+            # (and carry along any other field changes in the same PATCH).
             plan.append(
                 PlannedAction(
                     entity_type,
@@ -145,6 +156,10 @@ def compute_plan(
         else:
             plan.append(PlannedAction(entity_type, d.code, "NOOP", d.depth, "desired == current", parent_code=d.parent_code))
 
+    # Pass 2: walk the CMMS-current side. Anything active in the CMMS that MDM
+    # either never mentions, or mentions but says is no longer active, is a
+    # candidate to be archived -- not archived outright yet, it still has to
+    # clear the two safety rails below.
     for code, cur in current_platforms_sections.items():
         if cur.archived:
             continue
@@ -157,6 +172,11 @@ def compute_plan(
             PlannedAction(cur.family or "UNKNOWN", code, "ARCHIVE", depth, reason, {"assetCode": code, "archived": True}, parent_code=cur.parent_code)
         )
 
+    # Safety rail 1: never orphan an active descendant. Resolve deepest-first
+    # (sections before platforms) and track which codes were already accepted
+    # for archiving this run (`resolved_ok`), so a platform whose only section
+    # is *also* being archived right now doesn't get wrongly blocked by its
+    # own about-to-disappear child -- see DECISIONS.md #3.
     eligible: list[PlannedAction] = []
     blocked: list[PlannedAction] = []
     resolved_ok: set[str] = set()
@@ -171,6 +191,11 @@ def compute_plan(
             resolved_ok.add(cand.code)
             eligible.append(cand)
 
+    # Safety rail 2: never let one bad extraction silently mass-archive the
+    # tree. If archiving everything still "eligible" after rail 1 would wipe
+    # out more than the configured ratio of the active tree, freeze the whole
+    # destructive batch (block it) -- CREATE/UPDATE/UNARCHIVE above are never
+    # touched by this, only ARCHIVE is destructive.
     total_active_in_scope = sum(1 for a in current_platforms_sections.values() if not a.archived)
     ratio = (len(eligible) / total_active_in_scope) if total_active_in_scope else 0.0
     ratio_blocked = ratio > archive_ratio_threshold

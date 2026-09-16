@@ -129,6 +129,11 @@ class AuditStore:
 
     @contextmanager
     def run(self, integration: str, run_id: str | None = None) -> Iterator[str]:
+        """Used as `with audit.run("mdm_to_cmms") as run_id: ...`. Inserts the
+        `runs` row up front (status RUNNING) so a crash mid-integration still
+        leaves a trace, then always closes it out as either SUCCESS or FAILED
+        (with the exception message) when the `with` block exits, and
+        re-raises so the caller still sees the failure."""
         run_id = run_id or new_run_id()
         self.conn.execute(
             "INSERT INTO runs (run_id, integration, started_at, status) VALUES (?,?,?,?)",

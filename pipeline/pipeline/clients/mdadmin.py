@@ -97,11 +97,18 @@ def apply_plan(plan: SyncPlan, systemref_lite_dir: Path, mdm_db_path: Path) -> d
     if plan.is_empty():
         return {"systems": 0, "equipments": 0, "assignments": 0, "closures": 0}
 
+    # 1. Serialize the plan to a temp JSON file -- this is the only channel
+    #    between this process and the Django one; codes only, never numeric
+    #    DB ids, since the two processes never share an id space.
     with tempfile.NamedTemporaryFile("w", suffix=".json", delete=False) as f:
         json.dump({"systems": plan.systems, "equipments": plan.equipments, "assignments": plan.assignments}, f)
         plan_path = f.name
 
     try:
+        # 2. Run `manage.py apply_sync_plan` as a subprocess, inside
+        #    systemref_lite's own uv environment (cwd + SYSTEMREF_DB_PATH make
+        #    it point at the same MDM database this pipeline just read from).
+        #    The command applies everything in one Django transaction.
         result = subprocess.run(
             ["uv", "run", "manage.py", "apply_sync_plan", "--plan-file", plan_path],
             cwd=systemref_lite_dir,
@@ -111,10 +118,16 @@ def apply_plan(plan: SyncPlan, systemref_lite_dir: Path, mdm_db_path: Path) -> d
             timeout=120,
         )
     finally:
-        Path(plan_path).unlink(missing_ok=True)
+        Path(plan_path).unlink(missing_ok=True)  # always clean up the temp file, success or failure
 
     if result.returncode != 0:
+        # non-zero exit = the whole transaction was rolled back on the Django
+        # side; nothing was partially applied, so the caller can safely mark
+        # every pending action as failed rather than re-checking each one.
         raise MdAdminCommandError(result.returncode, result.stderr)
 
+    # 3. The command's last non-empty stdout line is a JSON summary
+    #    ({"systems": N, "equipments": N, ...}) -- everything before that may
+    #    be Django's own log noise, so we only trust the last line.
     summary_line = next((ln for ln in reversed(result.stdout.splitlines()) if ln.strip()), "{}")
     return json.loads(summary_line)
