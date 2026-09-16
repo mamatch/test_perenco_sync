@@ -365,7 +365,7 @@ container build
 
 Deployment should be automated through the existing GitLab CI/CD or equivalent pipeline. The production deployment should use immutable/containerized artifacts and environment-managed secrets/configuration.
 
-**Honest gap:** no CI config lives in this repository -- the list above is the target, not a `.gitlab-ci.yml` that exists today. What *is* runnable right now, and would be the first two CI steps: `cd pipeline && uv run pytest -q` ([`pipeline/tests/`](pipeline/tests/), 24 tests, no server needed) and `cd mock_gmao && uv run pytest -q` (`make test`, the sandbox's own API test suite).
+**Honest gap:** no CI config lives in this repository -- the list above is the target, not a `.gitlab-ci.yml` that exists today. What *is* runnable right now, and would be the first CI steps: `cd pipeline && uv run pytest -q` ([`pipeline/tests/`](pipeline/tests/), 59 tests, no server needed), `cd systemref_lite && uv run pytest -q` (6 tests, the `apply_sync_plan` write path), and `cd mock_gmao && uv run pytest -q` (`make test`, the sandbox's own API test suite).
 
 ---
 

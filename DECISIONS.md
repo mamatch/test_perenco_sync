@@ -234,7 +234,8 @@ every pending action is then recorded `FAILED_RETRYABLE` with the real stderr as
 -- never a partial success, since the Django side rolled back everything already (verified:
 a deliberately invalid plan entry raises `SystemClass.DoesNotExist` inside the transaction,
 the subprocess exits 1, and nothing from that plan -- valid entries included -- lands in
-the database).
+the database; pinned down as an automated test, not just a one-off manual check, in
+`systemref_lite/systemref/tests/test_apply_sync_plan.py::test_invalid_reference_in_plan_rolls_back_the_whole_batch`).
 
 Re-run end to end from a clean sandbox reset after the change: identical action counts to
 the raw-SQL version it replaced (6 rejections, 2 archived-on-disappearance, 44 updates, 4

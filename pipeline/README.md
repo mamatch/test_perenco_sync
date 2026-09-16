@@ -67,10 +67,17 @@ actually execute end to end: `ARCHIVE_RATIO_THRESHOLD=0.5 uv run python -m pipel
   fallback confirmed against real seed values), unit conversion, daily
   maximum-timestamp selection, counter-regression quarantine, dedupe on
   `(tag_id, timestamp_utc)` across overlapping exports.
-- Tests: `pipeline/tests/` covers the active-date rule boundaries, the delta engine
-  (including a same-run parent+child archive edge case caught by testing, not
-  hypothesised -- see DECISIONS.md #3), and the IoT tag/unit/dedupe/daily-selection
-  logic. All pure-Python, no server required.
+- Tests: `pipeline/tests/` (59 tests) covers the active-date rule boundaries, the delta
+  engine (including a same-run parent+child archive edge case caught by testing, not
+  hypothesised -- see DECISIONS.md #3), the IoT tag/unit/dedupe/daily-selection logic,
+  the three integrations' `run()` orchestration (empty-snapshot guard, failed-parent
+  propagation, governed-reference rejections, the counter-regression quarantine,
+  apply_plan failure handling) against a small hand-built MDM SQLite schema
+  (`tests/mdm_fixture.py`) and a mocked CMMS (`requests-mock`), and the CMMS client's
+  retry/rate-limit/pagination behaviour. All run with no server needed.
+  `systemref_lite/systemref/tests/` (6 tests, `uv run pytest` from `systemref_lite/`)
+  separately covers the `apply_sync_plan` management command itself -- upsert/close/
+  assign and the all-or-nothing transaction rollback on an invalid plan entry.
 
 ## What is not done
 
