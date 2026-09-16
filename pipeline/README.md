@@ -10,6 +10,7 @@ From the repository root, with the sandbox up (`make up`, or `make local-cmms` /
 `make local-mdm-seed` + `make local-mdm` without Docker):
 
 ```bash
+cd systemref_lite && uv sync && cd ..   # once: cmms_to_mdm dispatches into this venv
 cd pipeline
 uv sync
 uv run python -m pipeline run-all          # all three integrations, in order
@@ -21,10 +22,10 @@ uv run pytest -q                           # unit tests, no server needed
 
 Configuration is environment variables, all optional (defaults match the sandbox --
 see `pipeline/config.py`): `CMMS_BASE_URL`, `CMMS_TENANT`, `CMMS_API_KEY`,
-`SYSTEMREF_DB_PATH`, `IOT_EXPORTS_DIR`, `AUDIT_DB_PATH`, `ARCHIVE_RATIO_THRESHOLD`
-(default `0.10`), `CMMS_RATE_LIMIT_PER_MINUTE` (default `50`). The MDM active-scope rule
-(`date_start <= as_of and (date_end is null or date_end > as_of)`) is fixed, not
-configurable -- see DECISIONS.md #1.
+`SYSTEMREF_DB_PATH`, `SYSTEMREF_LITE_DIR`, `IOT_EXPORTS_DIR`, `AUDIT_DB_PATH`,
+`ARCHIVE_RATIO_THRESHOLD` (default `0.10`), `CMMS_RATE_LIMIT_PER_MINUTE` (default `50`).
+The MDM active-scope rule (`date_start <= as_of and (date_end is null or date_end > as_of)`)
+is fixed, not configurable -- see DECISIONS.md #1.
 
 **Idempotency proof**, exactly as the exercise asks for it:
 
@@ -47,7 +48,11 @@ actually execute end to end: `ARCHIVE_RATIO_THRESHOLD=0.5 uv run python -m pipel
   archive), the 10% destructive-only safety rail, recursive active-descendant
   protection, the empty-snapshot guard, retry/backoff/rate-limiting against the mock's
   real quirks (429 with `Retry-After`, ~3% 5xx, `Filter` hiding `archived`), and explicit
-  rejection reporting for CMMS -> MDM instead of silent fixes.
+  rejection reporting for CMMS -> MDM instead of silent fixes. MDM writes (CMMS -> MDM
+  direction) go through a Django management command inside `systemref_lite`
+  (`apply_sync_plan`, additive-only -- see DECISIONS.md #13), not raw SQL from this
+  service; a failed apply rolls back as one transaction and every pending action is
+  recorded `FAILED_RETRYABLE`, never a partial write.
 - **Part C**: `pipeline/audit.py` (SQLite `runs` / `actions` / `dq_issues` /
   `run_metrics` / `alerts`), a text health summary + alert rules printed after every run
   (`pipeline/observability.py`), one implemented alert condition (archive ratio > 10%)
@@ -63,8 +68,8 @@ actually execute end to end: `ARCHIVE_RATIO_THRESHOLD=0.5 uv run python -m pipel
 
 ## What is not done
 
-- No dbt/Snowflake/Airflow (see DECISIONS.md #11 for why, and how the code already maps
-  onto that target).
+- No dbt/Snowflake, and Celery orchestration is documented but not stood up here (see
+  DECISIONS.md #11/#12 for why, and how the code already maps onto that target).
 - No real dashboard: the health summary is text + the SQLite audit tables are meant to
   be queried directly. A production dashboard (Grafana/Metabase on top of the same
   `runs`/`actions`/`dq_issues`/`run_metrics` tables, or their Snowflake equivalent) would
@@ -76,6 +81,9 @@ actually execute end to end: `ARCHIVE_RATIO_THRESHOLD=0.5 uv run python -m pipel
   answer "who fixes a system without a section?" without reading logs.
 - Existing-platform body/site reassignment is reported, not auto-applied (DECISIONS.md
   #11).
-- No per-worker/shared rate limiting across multiple concurrent Airflow tasks -- this is
-  a single-process CLI; ARCHITECTURE_.md already describes the production evolution
-  (queued actions, shared limiter across workers).
+- No per-worker/shared rate limiting across multiple concurrent workers -- this is a
+  single-process CLI; ARCHITECTURE_.md section 2 already describes the production
+  evolution (a concurrency cap on the CMMS-calling Celery queue).
+- The dispatch to `apply_sync_plan` is a `subprocess.run(["uv", "run", "manage.py", ...])`
+  call, not the Celery task dispatch production would use -- the sandbox-appropriate stand-in
+  for "triggering execution inside MDAdmin's process" (DECISIONS.md #13).

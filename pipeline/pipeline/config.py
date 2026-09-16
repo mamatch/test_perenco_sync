@@ -28,6 +28,9 @@ class Settings:
     mdm_db_path: Path = field(
         default_factory=lambda: Path(os.getenv("SYSTEMREF_DB_PATH", str(REPO_ROOT / "mdm_data" / "systemref.sqlite3")))
     )
+    systemref_lite_dir: Path = field(
+        default_factory=lambda: Path(os.getenv("SYSTEMREF_LITE_DIR", str(REPO_ROOT / "systemref_lite")))
+    )
     iot_exports_dir: Path = field(default_factory=lambda: Path(os.getenv("IOT_EXPORTS_DIR", str(REPO_ROOT / "iot_historian" / "exports"))))
     audit_db_path: Path = field(default_factory=lambda: Path(os.getenv("AUDIT_DB_PATH", str(REPO_ROOT / "pipeline" / "state" / "audit.sqlite3"))))
 

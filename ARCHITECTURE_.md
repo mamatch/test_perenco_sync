@@ -489,7 +489,7 @@ I would **keep the warehouse-centric parts for analytics and history, keep Celer
 - Replace Snowflake Python UDF-based API calls with a dedicated Python sync service (functional core + I/O shell, the same shape as the `pipeline/` sandbox prototype).
 - Repoint the existing Celery chain at this service's three independent task groups, rather than introducing a second orchestration mechanism purely for this integration.
 - Use a command/audit store (Postgres) as the boundary between planning and execution, decoupled from Snowflake so the sync never waits on the warehouse.
-- Route MDM writes (CMMS → MDM direction) through a Django management command inside MDAdmin's own process rather than writing into MDM's tables directly from the sync service -- preserves any model-level validation/signals MDAdmin's ORM would otherwise bypass, and mirrors the pattern the current Celery import step already uses.
+- Route MDM writes (CMMS → MDM direction) through a Django management command inside MDAdmin's own process rather than writing into MDM's tables directly from the sync service -- preserves any model-level validation/signals MDAdmin's ORM would otherwise bypass, and mirrors the pattern the current Celery import step already uses. **Implemented, not just designed**: `systemref_lite/systemref/management/commands/apply_sync_plan.py` applies the plan `pipeline/pipeline/cmms_to_mdm.py` computes, inside one `transaction.atomic()`; the sandbox dispatches it with a `manage.py` subprocess call (`clients/mdadmin.py`) as the local stand-in for the Celery task dispatch production would use (`DECISIONS.md` #13).
 
 ### Trade-offs
 

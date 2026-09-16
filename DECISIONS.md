@@ -210,3 +210,41 @@ missing run more passively.
 
 **Still open:** confirm with the MDAdmin team whether Celery is used for anything beyond
 this one chain before committing to either path in production.
+
+## 13. MDM writes go through a Django management command, implemented for real
+
+Confirmed during the clarification exchange: the exercise's "do not modify the sandbox
+code" rule covers `systemref_lite`'s *existing* definitions (models, migrations, the other
+management commands) so the mock MDM stays functional -- it does not forbid *adding* a new,
+purely additive management command. `systemref_lite/systemref/management/commands/apply_sync_plan.py`
+is that addition: it applies, through the Django ORM inside one `transaction.atomic()`, the
+write plan `pipeline/pipeline/cmms_to_mdm.py` computes -- nothing in `systemref_lite` that
+already existed before this change was touched.
+
+The write path changed shape, not behaviour: `pipeline/pipeline/clients/mdm.py` is read-only
+now (the desired-state read for MDM → CMMS, and the governed-reference/current-state reads
+CMMS → MDM needs to compute its delta and its NOOP/UPDATE distinction). `cmms_to_mdm.py`
+still does 100% of the validation and diffing in pure Python, exactly as before; it only
+ever hands the management command entries that already passed that validation, as codes
+(`system_class_code`, `platform_code`, ...), never numeric foreign keys, so the two
+processes never need to agree on an ID space. The whole plan is applied as one transaction:
+`clients/mdadmin.py::apply_plan()` raises `MdAdminCommandError` on any non-zero exit, and
+every pending action is then recorded `FAILED_RETRYABLE` with the real stderr as the reason
+-- never a partial success, since the Django side rolled back everything already (verified:
+a deliberately invalid plan entry raises `SystemClass.DoesNotExist` inside the transaction,
+the subprocess exits 1, and nothing from that plan -- valid entries included -- lands in
+the database).
+
+Re-run end to end from a clean sandbox reset after the change: identical action counts to
+the raw-SQL version it replaced (6 rejections, 2 archived-on-disappearance, 44 updates, 4
+NOOPs on the first run; 48 NOOPs and the same 6 rejections, zero new CMMS/MDM writes, on
+the second), and the same criticality-overwrite and disappearance cases from `DECISIONS.md`
+#5-#6 still resolve the same way, now through the ORM instead of hand-written SQL.
+
+**Sandbox-only simplification, called out rather than hidden:** the dispatch from
+`pipeline/` to the management command is a `subprocess.run(["uv", "run", "manage.py", ...])`
+call, not the Celery task dispatch `ARCHITECTURE_.md` section 2 describes for production.
+A subprocess call is the right stand-in for a single-machine exercise (no broker to stand
+up for one write path) and demonstrates the actual boundary that matters -- writes happen
+inside MDAdmin's process, through its ORM, never from outside it -- without pretending to
+be a production deployment topology it isn't.

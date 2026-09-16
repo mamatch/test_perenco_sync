@@ -163,5 +163,4 @@ def run(cmms: CmmsClient, mdm: MdmClient, audit: AuditStore, settings: Settings,
                 )
                 failed_parents.add(item.code)
 
-        mdm.commit()
         return run_id

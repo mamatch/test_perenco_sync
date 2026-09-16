@@ -1,15 +1,16 @@
-"""Access to the MDM (systemref-lite) SQLite database.
+"""Read-only access to the MDM (systemref-lite) SQLite database.
 
-Read side: builds the MDM-owned desired state (platforms, sections) used by
-the MDM -> CMMS integration.
+Builds the MDM-owned desired state (platforms, sections) used by the
+MDM -> CMMS integration, and the governed-reference lookups /
+current-state reads the CMMS -> MDM integration needs to compute its delta.
+Plain sqlite3, not the Django ORM: reading directly against the file is "any
+SQLite-capable tool" per docs/04_mdm_and_iot.md, and this client never needs
+Django's app registry set up just to read.
 
-Write side: upserts CMMS-owned systems/equipments back into the MDM for the
-CMMS -> MDM integration, and reconciles disappeared/archived ones. Uses plain
-sqlite3 rather than the Django ORM so the pipeline has no dependency on the
-Django app being importable/configured -- the file is "any SQLite-capable
-tool" per docs/04_mdm_and_iot.md. Foreign keys are enforced (PRAGMA
-foreign_keys=ON) and every write happens inside a single transaction per run
-so a mid-run failure cannot leave the MDM half-migrated.
+Writes are a different story: they go through `clients/mdadmin.py`, which
+triggers a Django management command inside MDAdmin's own process (ORM,
+transaction, any future model-level validation) rather than writing into
+these tables directly from here -- see ARCHITECTURE_.md section 2/11.
 """
 
 from __future__ import annotations
@@ -156,127 +157,26 @@ class MdmClient:
     def equipment_by_code(self, code: str) -> sqlite3.Row | None:
         return self.conn.execute("SELECT * FROM systemref_equipment WHERE code = ?", (code,)).fetchone()
 
-    # -- CMMS -> MDM: writes --------------------------------------------------
-    def upsert_system(
-        self,
-        *,
-        code: str,
-        tag: str,
-        system_class_id: int,
-        system_unit_id: int,
-        section_id: int,
-        source: str,
-        date_start: str | None,
-        date_end: str | None,
-    ) -> tuple[int, bool]:
-        row = self.system_by_code(code)
-        if row is None:
-            cur = self.conn.execute(
-                """INSERT INTO systemref_system (code, tag, source, date_start, date_end, section_id, system_class_id, system_unit_id)
-                   VALUES (?,?,?,?,?,?,?,?)""",
-                (code, tag, source, date_start, date_end, section_id, system_class_id, system_unit_id),
-            )
-            return cur.lastrowid, True
-        changed = (
-            row["tag"] != tag
-            or row["section_id"] != section_id
-            or row["system_class_id"] != system_class_id
-            or row["system_unit_id"] != system_unit_id
-            or row["date_start"] != date_start
-            or row["date_end"] != date_end
-        )
-        if changed:
-            self.conn.execute(
-                """UPDATE systemref_system SET tag=?, section_id=?, system_class_id=?, system_unit_id=?,
-                   date_start=?, date_end=? WHERE id=?""",
-                (tag, section_id, system_class_id, system_unit_id, date_start, date_end, row["id"]),
-            )
-        return row["id"], changed
-
-    def set_system_attributes(self, system_id: int, attribute_ids: set[int]) -> bool:
-        current = {
-            r["system_attribute_id"]
+    def system_attribute_names(self, system_id: int) -> set[str]:
+        return {
+            r["name"]
             for r in self.conn.execute(
-                "SELECT system_attribute_id FROM systemref_systemattributeassignment WHERE system_id = ?", (system_id,)
+                """SELECT sa.name FROM systemref_systemattributeassignment saa
+                   JOIN systemref_systemattribute sa ON sa.id = saa.system_attribute_id
+                   WHERE saa.system_id = ?""",
+                (system_id,),
             ).fetchall()
         }
-        if current == attribute_ids:
-            return False
-        to_remove = current - attribute_ids
-        to_add = attribute_ids - current
-        if to_remove:
-            self.conn.executemany(
-                "DELETE FROM systemref_systemattributeassignment WHERE system_id=? AND system_attribute_id=?",
-                [(system_id, a) for a in to_remove],
-            )
-        if to_add:
-            self.conn.executemany(
-                "INSERT INTO systemref_systemattributeassignment (system_id, system_attribute_id) VALUES (?,?)",
-                [(system_id, a) for a in to_add],
-            )
-        return True
 
-    def upsert_equipment(
-        self,
-        *,
-        code: str,
-        name: str | None,
-        equipment_type_id: int,
-        date_start: str | None,
-        date_end: str | None,
-    ) -> tuple[int, bool]:
-        row = self.equipment_by_code(code)
-        if row is None:
-            cur = self.conn.execute(
-                "INSERT INTO systemref_equipment (code, name, date_start, date_end, equipment_type_id) VALUES (?,?,?,?,?)",
-                (code, name, date_start, date_end, equipment_type_id),
-            )
-            return cur.lastrowid, True
-        changed = (
-            row["name"] != name
-            or row["equipment_type_id"] != equipment_type_id
-            or row["date_start"] != date_start
-            or row["date_end"] != date_end
-        )
-        if changed:
-            self.conn.execute(
-                "UPDATE systemref_equipment SET name=?, equipment_type_id=?, date_start=?, date_end=? WHERE id=?",
-                (name, equipment_type_id, date_start, date_end, row["id"]),
-            )
-        return row["id"], changed
-
-    def ensure_system_equipment_assignment(self, system_id: int, equipment_id: int, assignment_date: str) -> bool:
+    def system_equipment_assignment_exists(self, system_code: str, equipment_code: str) -> bool:
         row = self.conn.execute(
-            "SELECT id FROM systemref_systemequipmentassignment WHERE system_id=? AND equipment_id=?",
-            (system_id, equipment_id),
+            """SELECT a.id FROM systemref_systemequipmentassignment a
+               JOIN systemref_system s ON s.id = a.system_id
+               JOIN systemref_equipment e ON e.id = a.equipment_id
+               WHERE s.code = ? AND e.code = ?""",
+            (system_code, equipment_code),
         ).fetchone()
-        if row:
-            return False
-        self.conn.execute(
-            "INSERT INTO systemref_systemequipmentassignment (system_id, equipment_id, assignment_date) VALUES (?,?,?)",
-            (system_id, equipment_id, assignment_date),
-        )
-        return True
-
-    def set_system_date_end(self, system_id: int, date_end: str | None) -> bool:
-        row = self.conn.execute("SELECT date_end FROM systemref_system WHERE id=?", (system_id,)).fetchone()
-        if row["date_end"] == date_end:
-            return False
-        self.conn.execute("UPDATE systemref_system SET date_end=? WHERE id=?", (date_end, system_id))
-        return True
-
-    def set_equipment_date_end(self, equipment_id: int, date_end: str | None) -> bool:
-        row = self.conn.execute("SELECT date_end FROM systemref_equipment WHERE id=?", (equipment_id,)).fetchone()
-        if row["date_end"] == date_end:
-            return False
-        self.conn.execute("UPDATE systemref_equipment SET date_end=? WHERE id=?", (date_end, equipment_id))
-        return True
-
-    def commit(self) -> None:
-        self.conn.commit()
-
-    def rollback(self) -> None:
-        self.conn.rollback()
+        return row is not None
 
 
 def _to_date(value: str | None) -> date | None:

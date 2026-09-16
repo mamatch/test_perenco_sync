@@ -11,6 +11,14 @@ Only two Asset/Filter calls are made regardless of tenant size (one for
 archived=False, one for archived=True, both fully paginated): the Filter
 response already carries family, parent, bodies, criticality and
 inServiceDate, so there is no need for a per-asset Get call.
+
+All delta computation and validation happens here, in pure Python, against
+read-only MDM lookups (`clients/mdm.py`). Writes are collected into a
+`SyncPlan` and applied in one shot at the end by triggering a Django
+management command inside MDAdmin's own process (`clients/mdadmin.py`) --
+see ARCHITECTURE_.md section 2/11 for why writes don't happen directly from
+here. The plan is one transaction on the Django side: if it fails, every
+pending action is recorded FAILED_RETRYABLE, never a partial success.
 """
 
 from __future__ import annotations
@@ -21,6 +29,7 @@ from datetime import datetime, timezone
 
 from .audit import ActionRecord, AuditStore
 from .clients.cmms import CmmsClient
+from .clients.mdadmin import MdAdminCommandError, SyncPlan, apply_plan
 from .clients.mdm import MdmClient
 from .config import Settings
 
@@ -78,7 +87,8 @@ def run(cmms: CmmsClient, mdm: MdmClient, audit: AuditStore, settings: Settings,
         audit.record_metric(run_id, "cmms_equipments_seen", len(equipments))
 
         rejected_systems: set[str] = set()
-        resolved_system_id: dict[str, int] = {}
+        plan = SyncPlan()
+        pending: list[ActionRecord] = []
 
         # -- Systems --------------------------------------------------------
         for code, sys_asset in systems.items():
@@ -120,34 +130,46 @@ def run(cmms: CmmsClient, mdm: MdmClient, audit: AuditStore, settings: Settings,
                 rejected_systems.add(code)
                 continue
 
-            system_id, changed = mdm.upsert_system(
-                code=code,
-                tag=sys_asset.name,
-                system_class_id=system_class["id"],
-                system_unit_id=system_unit["id"],
-                section_id=section_category["id"],
-                source=settings.cmms_tenant,
-                date_start=_date_only(sys_asset.in_service_date),
-                date_end=(today if sys_asset.archived else None),
-            )
-            resolved_system_id[code] = system_id
-
-            attr_ids: set[int] = set()
+            attribute_names: set[str] = set()
             if sys_asset.criticality_code:
                 attr_name = CRITICALITY_TO_ATTRIBUTE.get(sys_asset.criticality_code)
                 if attr_name:
-                    row = mdm.system_attribute_by_name(attr_name)
-                    if row:
-                        attr_ids.add(row["id"])
+                    attribute_names.add(attr_name)
                 else:
                     audit.record_dq_issue(
                         run_id, "cmms_to_mdm", "SYSTEM", code, "unknown_criticality_code",
                         f"criticality code '{sys_asset.criticality_code}' does not map to a known governed attribute (typo?)",
                     )
-            attrs_changed = mdm.set_system_attributes(system_id, attr_ids)
 
-            action = "UPDATE" if (changed or attrs_changed) else "NOOP"
-            audit.record_action(run_id, ActionRecord("CMMS", "MDM", "SYSTEM", code, action, "SUCCESS"))
+            date_start = _date_only(sys_asset.in_service_date)
+            date_end = today if sys_asset.archived else None
+            existing = mdm.system_by_code(code)
+            current_attrs = mdm.system_attribute_names(existing["id"]) if existing else set()
+            changed = existing is None or (
+                existing["tag"] != sys_asset.name
+                or existing["section_id"] != section_category["id"]
+                or existing["system_class_id"] != system_class["id"]
+                or existing["system_unit_id"] != system_unit["id"]
+                or existing["date_start"] != date_start
+                or existing["date_end"] != date_end
+                or current_attrs != attribute_names
+            )
+
+            if changed:
+                plan.upsert_system(
+                    code=code,
+                    tag=sys_asset.name,
+                    system_class_code=class_code,
+                    platform_code=platform_code,
+                    section_code=suffix,
+                    source=settings.cmms_tenant,
+                    date_start=date_start,
+                    date_end=date_end,
+                    attribute_names=attribute_names,
+                )
+                pending.append(ActionRecord("CMMS", "MDM", "SYSTEM", code, "UPDATE", "SUCCESS"))
+            else:
+                audit.record_action(run_id, ActionRecord("CMMS", "MDM", "SYSTEM", code, "NOOP", "SUCCESS"))
 
         # -- Equipments -------------------------------------------------------
         for code, eq_asset in equipments.items():
@@ -166,36 +188,64 @@ def run(cmms: CmmsClient, mdm: MdmClient, audit: AuditStore, settings: Settings,
                 _reject(audit, run_id, "EQUIPMENT", code, "unknown_equipment_type", f"governed equipment type '{eq_asset.family}' is not known to the MDM")
                 continue
 
-            equipment_id, changed = mdm.upsert_equipment(
-                code=code,
-                name=eq_asset.name,
-                equipment_type_id=equipment_type["id"],
-                date_start=_date_only(eq_asset.in_service_date),
-                date_end=(today if eq_asset.archived else None),
+            date_start = _date_only(eq_asset.in_service_date)
+            date_end = today if eq_asset.archived else None
+            existing = mdm.equipment_by_code(code)
+            changed = existing is None or (
+                existing["name"] != eq_asset.name
+                or existing["equipment_type_id"] != equipment_type["id"]
+                or existing["date_start"] != date_start
+                or existing["date_end"] != date_end
             )
-            system_id = resolved_system_id.get(parent.code)
-            assignment_created = False
-            if system_id is not None:
-                assignment_created = mdm.ensure_system_equipment_assignment(
-                    system_id, equipment_id, _date_only(eq_asset.in_service_date) or today
-                )
-            action = "UPDATE" if (changed or assignment_created) else "NOOP"
-            audit.record_action(run_id, ActionRecord("CMMS", "MDM", "EQUIPMENT", code, action, "SUCCESS"))
+            assignment_exists = mdm.system_equipment_assignment_exists(parent.code, code)
+
+            recorded = False
+            if changed:
+                plan.upsert_equipment(code=code, name=eq_asset.name, equipment_type_code=eq_asset.family, date_start=date_start, date_end=date_end)
+                pending.append(ActionRecord("CMMS", "MDM", "EQUIPMENT", code, "UPDATE", "SUCCESS"))
+                recorded = True
+            if not assignment_exists:
+                plan.assign(system_code=parent.code, equipment_code=code, assignment_date=date_start or today)
+                if not recorded:
+                    pending.append(ActionRecord("CMMS", "MDM", "EQUIPMENT", code, "UPDATE", "SUCCESS"))
+                    recorded = True
+            if not recorded:
+                audit.record_action(run_id, ActionRecord("CMMS", "MDM", "EQUIPMENT", code, "NOOP", "SUCCESS"))
 
         # -- Disappeared: MDM knows a System/Equipment that CMMS no longer reports at all ---
         seen_codes = set(assets.keys())
-        for row in mdm.conn.execute("SELECT id, code FROM systemref_system WHERE date_end IS NULL").fetchall():
+        for row in mdm.conn.execute("SELECT code FROM systemref_system WHERE date_end IS NULL").fetchall():
             if row["code"] not in seen_codes:
-                if mdm.set_system_date_end(row["id"], today):
-                    audit.record_action(run_id, ActionRecord("CMMS", "MDM", "SYSTEM", row["code"], "ARCHIVE", "SUCCESS", "disappeared from the CMMS extraction"))
-                    audit.record_dq_issue(run_id, "cmms_to_mdm", "SYSTEM", row["code"], "disappeared_from_cmms", "no longer reported by the CMMS connector (active or archived)")
-        for row in mdm.conn.execute("SELECT id, code FROM systemref_equipment WHERE date_end IS NULL").fetchall():
+                plan.close_system(row["code"], today)
+                pending.append(ActionRecord("CMMS", "MDM", "SYSTEM", row["code"], "ARCHIVE", "SUCCESS", "disappeared from the CMMS extraction"))
+                audit.record_dq_issue(run_id, "cmms_to_mdm", "SYSTEM", row["code"], "disappeared_from_cmms", "no longer reported by the CMMS connector (active or archived)")
+        for row in mdm.conn.execute("SELECT code FROM systemref_equipment WHERE date_end IS NULL").fetchall():
             if row["code"] not in seen_codes:
-                if mdm.set_equipment_date_end(row["id"], today):
-                    audit.record_action(run_id, ActionRecord("CMMS", "MDM", "EQUIPMENT", row["code"], "ARCHIVE", "SUCCESS", "disappeared from the CMMS extraction"))
-                    audit.record_dq_issue(run_id, "cmms_to_mdm", "EQUIPMENT", row["code"], "disappeared_from_cmms", "no longer reported by the CMMS connector (active or archived)")
+                plan.close_equipment(row["code"], today)
+                pending.append(ActionRecord("CMMS", "MDM", "EQUIPMENT", row["code"], "ARCHIVE", "SUCCESS", "disappeared from the CMMS extraction"))
+                audit.record_dq_issue(run_id, "cmms_to_mdm", "EQUIPMENT", row["code"], "disappeared_from_cmms", "no longer reported by the CMMS connector (active or archived)")
 
-        mdm.commit()
+        # -- Apply the plan inside MDAdmin's own process -----------------------
+        if not plan.is_empty():
+            try:
+                summary = apply_plan(plan, settings.systemref_lite_dir, settings.mdm_db_path)
+                for rec in pending:
+                    audit.record_action(run_id, rec)
+                audit.record_metric(run_id, "mdadmin_plan_systems_applied", summary.get("systems", 0))
+                audit.record_metric(run_id, "mdadmin_plan_equipments_applied", summary.get("equipments", 0))
+                audit.record_metric(run_id, "mdadmin_plan_assignments_applied", summary.get("assignments", 0))
+                audit.record_metric(run_id, "mdadmin_plan_closures_applied", summary.get("closures", 0))
+            except MdAdminCommandError as exc:
+                logger.error("apply_sync_plan failed: %s", exc)
+                for rec in pending:
+                    rec.status = "FAILED_RETRYABLE"
+                    rec.reason = f"apply_sync_plan failed: {exc.stderr[:300]}"
+                    audit.record_action(run_id, rec)
+                audit.record_alert(
+                    run_id, "cmms_to_mdm", "CRITICAL",
+                    f"MDAdmin apply_sync_plan failed ({exc.returncode}): the whole batch of {len(pending)} MDM write(s) was rolled back.",
+                )
+
         return run_id
 
 
