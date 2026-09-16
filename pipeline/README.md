@@ -11,6 +11,7 @@ From the repository root, with the sandbox up (`make up`, or `make local-cmms` /
 
 ```bash
 cd systemref_lite && uv sync && cd ..   # once: cmms_to_mdm dispatches into this venv
+                                         # (make sync, from the repo root, does this for you)
 cd pipeline
 uv sync
 uv run python -m pipeline run-all          # all three integrations, in order

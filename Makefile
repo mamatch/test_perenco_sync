@@ -41,4 +41,5 @@ local-mdm:     ## run the MDM without Docker (after local-mdm-seed)
 	cd systemref_lite && uv run manage.py runserver 8000
 
 sync:          ## candidate solution: run the MDM<->CMMS<->IoT sync against a running sandbox
+	cd systemref_lite && uv sync && cd ..
 	cd pipeline && uv sync && uv run python -m pipeline run-all
