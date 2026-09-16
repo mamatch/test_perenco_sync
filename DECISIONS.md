@@ -184,32 +184,33 @@ right rather than coincidentally plausible.
   is an operationally heavier action than a rename, and the statement lists "orphans,
   suspicious cases" as things to report rather than silently fix.
 
-## 12. Orchestration: repoint Celery, on an unverified assumption
+## 12. Orchestration: repoint Celery -- topology confirmed, one question still open
 
 `docs/01_context.md` documents exactly one Celery chain in MDAdmin -- this integration's
 own five-step legacy process -- and says nothing about whether Celery is used for anything
-else there. `ARCHITECTURE_.md` sections 2 and 11 commit to repointing that existing chain
-at three new, independent tasks rather than introducing Airflow, on the explicit assumption
-that Celery already serves other scheduled/background work in MDAdmin. If so, the broker,
-autoscaled workers and Beat singleton are a sunk, amortised cost, and adding three tasks to
-them is far cheaper than introducing and operating a second "how do we schedule background
-work" mechanism for one integration.
+else there. An earlier draft of `ARCHITECTURE_.md` filled that gap by *assuming* a
+Kubernetes/AKS deployment (a separate broker, autoscaled worker fleet, a Beat singleton pod)
+and reasoned from there. That assumption was never grounded in `docs/01_context.md` and
+turned out to be wrong: confirmed on a later exchange, Celery runs on the MDAdmin/Django
+instance itself, not as a separate distributed deployment. `ARCHITECTURE_.md` section 2 now
+reflects that directly instead of the earlier AKS-specific reasoning (Redis-backed Beat
+persistence, KEDA autoscaling, a per-replica concurrency cap), none of which applies to a
+single instance.
 
-**If that assumption is wrong** -- if this chain is the *only* thing Celery does in
-MDAdmin -- the calculus flips: keeping a whole distributed system (Redis broker, autoscaled
-workers, a singleton Beat pod, plus the Kubernetes-specific fixes in ARCHITECTURE_.md
-section 2 for Beat's schedule persistence and per-worker rate limiting) alive for three
-tasks that together run a few times a night is harder to justify than **Azure Container
-Apps Jobs on a cron trigger**: no broker, no worker fleet, no Beat singleton, native
-per-job retry policy, and execution history/logs through Azure Monitor without standing up
-anything extra. The cost of that alternative is no native cross-task dependency graph if
-requirements ever grow past three independent branches, and a "job never fired at all"
-failure mode that needs its own dead-man's-switch alert (a scheduled query checking for no
-successful execution in the last N hours), where a DAG-oriented tool would surface a
-missing run more passively.
-
-**Still open:** confirm with the MDAdmin team whether Celery is used for anything beyond
-this one chain before committing to either path in production.
+That topology fact actually strengthens the case for repointing Celery rather than weakening
+it: adding three tasks to a process that's already running is close to free either way,
+whether or not Celery also does other scheduled work in MDAdmin. The remaining open question
+is narrower than before -- **still open:** confirm with the MDAdmin team whether Celery is
+used for anything beyond this one chain. If it turns out to serve nothing else and Perenco
+would rather retire it from MDAdmin outright, **Azure Container Apps Jobs on a cron trigger**
+is the alternative (`ARCHITECTURE_.md` section 2): no broker, worker or Beat process to
+operate, native per-job retry, execution history through Azure Monitor, at the cost of no
+native cross-task dependency graph if requirements ever grow past three independent
+branches, and a "job never fired at all" failure mode that needs its own dead-man's-switch
+alert (a scheduled query checking for no successful execution in the last N hours) rather
+than a DAG-oriented tool surfacing a missing run more passively. Since Celery is already
+running rather than something to newly provision, choosing that alternative would be a
+deliberate decommissioning decision, not a technical necessity created by this integration.
 
 ## 13. MDM writes go through a Django management command, implemented for real
 

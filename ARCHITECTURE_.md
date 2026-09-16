@@ -29,9 +29,7 @@ The design is based on eight principles:
 
 ### Why Celery, not a new orchestrator
 
-MDAdmin already runs a Celery chain in production ([`docs/01_context.md`](docs/01_context.md#L35)) -- Celery is Perenco's existing mechanism for scheduled/background work, not something this design introduces. Assuming, as this design does, that Celery serves other jobs in MDAdmin beyond this one chain, the lowest-risk move is to repoint the existing chain rather than add a second "how do we schedule background work" mechanism (Airflow) purely for this integration. If that assumption doesn't hold, the calculus changes -- see [`DECISIONS.md`](DECISIONS.md).
-
-A Celery `group` of three independent tasks replaces the chain's current five sequential steps:
+Confirmed on the clarification call: Celery already runs in production today on the MDAdmin/Django instance itself ([`docs/01_context.md`](docs/01_context.md#L35) describes its one existing five-step chain there). It is live infrastructure, not something this design would introduce. Repointing it at three new, independent tasks is additive to what already runs; bringing in a second "how do we schedule background work" mechanism (Airflow) purely for this integration would not be, and nothing about these three tasks needs a DAG tool: they have no ordering dependency on each other (each owns a disjoint slice of state -- platforms/sections, systems/equipments, meters), unlike the old chain's five sequential steps, so a Celery `group` replaces it directly:
 
 ```text
 nightly_sync (Celery group, triggered by Beat)
@@ -40,15 +38,11 @@ nightly_sync (Celery group, triggered by Beat)
 └── iot_to_cmms_task    → pipeline.iot_to_cmms.run()
 ```
 
-No edges between them: none has a hard ordering dependency on another (each owns a disjoint slice of state -- platforms/sections, systems/equipments, meters), unlike the old chain's five sequential steps.
+Celery is responsible for **when and in which order** work runs, not for API retry/rate-limit logic -- that stays in the sync service's own client layer, as it already does in the `pipeline/` prototype ([`clients/cmms.py::CmmsClient`](pipeline/pipeline/clients/cmms.py#L85)). The one thing this repointed setup still owes the CMMS is what section 7 already requires: its rate budget has to be respected across the whole run, not per task in isolation -- a single concurrency-limited queue for the CMMS-calling tasks is enough for that, since it's one instance rather than a worker fleet.
 
-On Kubernetes (AKS), three details make this work with the platform instead of against it:
+### Alternative: Azure Container Apps Jobs
 
-- **Beat's schedule state lives in Redis, not on local disk.** The default file-based scheduler (`celerybeat-schedule`) is lost on every pod restart (ephemeral filesystem); `celery-redbeat` stores it in the existing broker instead, so a rescheduled Beat pod doesn't miss or duplicate the nightly trigger.
-- **Workers autoscale 0→N with KEDA**, on its Redis queue-length scaler, rather than an always-on worker deployment sized for a job that only actually runs ~2h a night.
-- **The CMMS-calling queue is capped at one concurrent replica.** Celery's per-task `rate_limit` is enforced per worker, not globally across the fleet -- at this volume (50 req/min budget, three tasks a night) capping concurrency to one is simpler and sufficient, without needing a distributed token bucket.
-
-Celery is responsible for **when and in which order** work runs. It should not contain the detailed API retry/rate-limit logic -- that belongs in the sync service's own client layer, as it already does in the `pipeline/` prototype ([`pipeline/pipeline/clients/cmms.py::CmmsClient`](pipeline/pipeline/clients/cmms.py#L85)). The three tasks map directly onto the sandbox's [`pipeline/pipeline/cli.py`](pipeline/pipeline/cli.py)'s [`INTEGRATIONS`](pipeline/pipeline/cli.py#L22) tuple and `run-all` command -- each task is a thin wrapper that would call the same `pipeline.<module>.run()` entrypoint the CLI calls today, unchanged.
+Whether Celery serves anything beyond this one legacy chain in MDAdmin is still unconfirmed ([`DECISIONS.md` #12](DECISIONS.md#L187)). If it turns out to serve nothing else, and Perenco would rather retire it from MDAdmin than keep it running for three nightly tasks, **Azure Container Apps Jobs on a cron trigger** is the alternative: no broker, worker or Beat process to operate at all, native per-job retry, execution history through Azure Monitor. The cost is no native cross-task dependency graph if requirements ever grow past three independent branches, and a "job never fired at all" failure mode that needs its own dead-man's-switch alert, where a DAG-oriented tool would surface a missing run more passively. Since Celery is already running rather than something to newly provision, choosing this alternative would be a deliberate decommissioning decision, not a technical necessity created by this integration.
 
 ---
 
@@ -252,7 +246,7 @@ Retry:
 - HTTP 500 / 503;
 - network timeouts / connection errors.
 
-Use exponential backoff with jitter and a maximum retry count. Implemented as [`pipeline/pipeline/clients/cmms.py::CmmsClient._request()`](pipeline/pipeline/clients/cmms.py#L110)'s retry loop, [`_backoff_sleep()`](pipeline/pipeline/clients/cmms.py#L173) for the exponential-plus-jitter part. The global CMMS limit must be respected across all workers, not independently per task instance -- the sandbox client's own `_RateLimiter` is a per-process sliding window (proactive, not just reactive to 429s), which is enough for a single-process CLI; the production mitigation for *multiple* Celery workers is the concurrency cap on the CMMS-calling queue described in section 2, not a distributed limiter.
+Use exponential backoff with jitter and a maximum retry count. Implemented as [`pipeline/pipeline/clients/cmms.py::CmmsClient._request()`](pipeline/pipeline/clients/cmms.py#L110)'s retry loop, [`_backoff_sleep()`](pipeline/pipeline/clients/cmms.py#L173) for the exponential-plus-jitter part. The global CMMS limit must be respected across the whole run, not independently per task -- the sandbox client's own `_RateLimiter` is a per-process sliding window (proactive, not just reactive to 429s), which is enough here since it's a single process either way; the production mitigation is the concurrency-limited queue for the CMMS-calling tasks described in section 2.
 
 ### Non-retryable failures
 
@@ -383,7 +377,7 @@ I would **keep the warehouse-centric parts for analytics and history, keep Celer
 
 ### What I would keep
 
-- **Celery:** already Perenco's mechanism for scheduled/background work in MDAdmin (assumed, for this design, to serve other jobs there too -- otherwise see the trade-off below). Repointed at three new, independent tasks instead of the current five-step chain.
+- **Celery:** confirmed to already run on the MDAdmin/Django instance today (see section 2). Repointed at three new, independent tasks instead of the current five-step chain.
 - **Snowflake + dbt:** moved fully downstream, out of the operational path -- raw/staging models, canonical models, historical data (SCD2), analytics. Fed by Airbyte replicating two Postgres sources (MDM, the sync service's own audit/command store), not by the sync itself.
 - **MDM PostgreSQL:** system of record for MDM-owned data, read via a dedicated read replica rather than the primary.
 - **Key Vault:** secret management, accessed via managed identity rather than a stored credential.
@@ -400,9 +394,9 @@ I would **keep the warehouse-centric parts for analytics and history, keep Celer
 
 **Advantages:** clearer separation between analytics and operational integration, better control of API rate limits and retries, easier local testing, simpler replay, better observability of external-system failures, and no new orchestration technology to introduce or operate.
 
-**Costs:** one more deployable component (the sync service itself) versus keeping everything in Snowflake Tasks/UDFs. Celery on Kubernetes also needs three specific things to work with the platform rather than against it: a Redis-backed Beat schedule (`celery-redbeat`, not the default file-based one, which loses state on pod restart), KEDA-based worker autoscaling (0→N on queue depth, so a job that runs ~2h a night doesn't pay for always-on workers), and a concurrency cap on the CMMS-calling queue (Celery's `rate_limit` is enforced per worker, not globally across the fleet).
+**Costs:** one more deployable component (the sync service itself) versus keeping everything in Snowflake Tasks/UDFs.
 
-**The one assumption this rests on:** that Celery already serves purposes in MDAdmin beyond this one chain. [`DECISIONS.md`](DECISIONS.md) records the alternative if it doesn't -- Azure Container Apps Jobs on a cron trigger, no broker/worker/Beat infrastructure to operate at all, at the cost of native cross-task dependency management if requirements ever grow past three independent branches.
+**The one open question this rests on:** whether Celery serves anything in MDAdmin beyond this one chain -- see section 2 for the reasoning and the Azure Container Apps Jobs alternative if it doesn't.
 
 For the exercise sandbox, the implementation is deliberately simpler than the production target: a single-process CLI ([`pipeline/pipeline/cli.py`](pipeline/pipeline/cli.py)), a plain SQLite audit store rather than Postgres ([`pipeline/pipeline/audit.py`](pipeline/pipeline/audit.py)'s own docstring explains why SQLite is still the right choice for this operational, single-writer workload even in production -- it's the analytics/history layer that belongs in Snowflake, not the audit trail), and no orchestrator standing in front of it at all. A dbt-on-DuckDB proof of concept for the delta-computation core was built and verified against the sandbox during development, then deliberately removed before the final submission rather than kept alongside the tested `pipeline/` implementation ([`DECISIONS.md` #11](DECISIONS.md#L155)) -- so there is no DuckDB anywhere in this repository today. The architectural boundary remains the same either way, so the prototype can be evolved toward the production Celery/Snowflake setup without rewriting the business logic.
 
