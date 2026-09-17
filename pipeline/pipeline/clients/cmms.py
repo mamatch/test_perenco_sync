@@ -1,9 +1,9 @@
 """Thin client for the DIMO Maint MX connector API (docs/03_cmms_api.md).
 
-Responsibilities kept deliberately in this layer, per ARCHITECTURE_.md ("Airflow
-is responsible for when and in which order work runs. It should not contain the
-detailed API retry/rate-limit logic. That belongs in the integration
-worker/client layer."):
+Responsibilities kept deliberately in this layer, per ARCHITECTURE_.md: Celery
+is responsible for when and in which order work runs, not for the detailed API
+retry/rate-limit logic -- that belongs here, in the integration worker/client
+layer:
 
 * authentication (X-API-Key header, never logged);
 * a client-side rate limiter so the pipeline stays under the tenant's global
@@ -89,7 +89,7 @@ class CmmsClient:
         tenant: str,
         api_key: str,
         rate_limit_per_minute: int = 50,
-        max_retries: int = 6,
+        max_retries: int = 3,
         timeout: float = 10.0,
         session: requests.Session | None = None,
     ):

@@ -33,7 +33,7 @@ Confirmed on the clarification call: Celery already runs in production today on 
 
 ### Alternative: Azure Container Apps Jobs
 
-Whether Celery serves anything beyond this one legacy chain in MDAdmin is still unconfirmed ([`DECISIONS.md`](DECISIONS.md#L17)). If it turns out to serve nothing else, and Perenco would rather retire it from MDAdmin than keep it running for three nightly tasks, **Azure Container Apps Jobs on a cron trigger** is the alternative: no broker, worker or Beat process to operate at all. Since Celery is already running rather than something to newly provision, choosing this alternative would be a deliberate decommissioning decision, not a technical necessity created by this integration.
+Whether Celery serves anything beyond this one legacy chain in MDAdmin is still unconfirmed ([`DECISIONS.md`](DECISIONS.md#L16)). If it turns out to serve nothing else, and Perenco would rather retire it from MDAdmin than keep it running for three nightly tasks, **Azure Container Apps Jobs on a cron trigger** is the alternative: no broker, worker or Beat process to operate at all. Since Celery is already running rather than something to newly provision, choosing this alternative would be a deliberate decommissioning decision, not a technical necessity created by this integration.
 
 ---
 
@@ -45,7 +45,7 @@ An MDM object is active when `date_start <= now()` and `date_end` is null or `> 
 
 ### Destructive-action policy
 
-The 10% archive threshold is a **hard stop for destructive actions only**, scoped that way because the brief itself asks for "safety rails against destructive runs." Whether that also means the block should stay confined to the ARCHIVE subset, rather than halting the whole run, isn't spelled out -- a documented assumption ([`DECISIONS.md` #8](DECISIONS.md#L10)): a run may continue with non-destructive CREATE/UPDATE operations while ARCHIVE operations are blocked when the threshold is exceeded.
+The 10% archive threshold is a **hard stop for destructive actions only**, confirmed on the clarification call rather than assumed: a run continues with non-destructive CREATE/UPDATE operations while ARCHIVE operations are blocked when the threshold is exceeded ([section 12, Q1](#12-questions-asked-during-the-clarification-call-and-how-the-answers-shaped-the-design)).
 
 ![Destructive-action policy](./images/destruction_policy.png)
 
@@ -87,7 +87,7 @@ For each entity, compare a canonical representation rather than raw database row
 
 All six outcomes are produced by [`compute_plan()`](pipeline/pipeline/canonical.py#L84) and exercised individually in [`pipeline/tests/test_canonical.py`](pipeline/tests/test_canonical.py) ([`test_create_for_desired_absent_from_cmms`](pipeline/tests/test_canonical.py#L12), [`test_noop_when_identical`](pipeline/tests/test_canonical.py#L20), [`test_update_on_name_drift_mdm_wins`](pipeline/tests/test_canonical.py#L27), [`test_unarchive_when_back_in_scope`](pipeline/tests/test_canonical.py#L35), [`test_archive_candidate_when_out_of_scope_and_no_active_children`](pipeline/tests/test_canonical.py#L43), [`test_archive_blocked_by_active_descendant`](pipeline/tests/test_canonical.py#L51)).
 
-The business rule behind that UPDATE case is "the MDM is the reference for names," leaving how far to propagate a rename as an open call. The name in that diff is a Platform/Section name -- the only kind the MDM masters -- overwritten on the CMMS unconditionally on every run, never cascaded into System/Equipment names, which the CMMS supplies in the other direction ([`DECISIONS.md` #9](DECISIONS.md#L11)).
+The business rule behind that UPDATE case is "the MDM is the reference for names," leaving how far to propagate a rename as an open call. The name in that diff is a Platform/Section name -- the only kind the MDM masters -- overwritten on the CMMS unconditionally on every run, never cascaded into System/Equipment names, which the CMMS supplies in the other direction ([`DECISIONS.md` #8](DECISIONS.md#L10)).
 
 ### Ordering
 
@@ -239,7 +239,7 @@ Retry:
 - HTTP 500 / 503;
 - network timeouts / connection errors.
 
-Use exponential backoff with jitter and a maximum retry count. Implemented as [`pipeline/pipeline/clients/cmms.py::CmmsClient._request()`](pipeline/pipeline/clients/cmms.py#L110)'s retry loop, [`_backoff_sleep()`](pipeline/pipeline/clients/cmms.py#L173) for the exponential-plus-jitter part. The global CMMS limit must be respected across the whole run, not independently per task -- the sandbox client's own `_RateLimiter` is a per-process sliding window (proactive, not just reactive to 429s), which is enough here since it's a single process either way; the production mitigation is the concurrency-limited queue for the CMMS-calling tasks described in section 2.
+Use exponential backoff with jitter and a maximum retry count of **3**, confirmed on the clarification call ([section 12, Q7](#12-questions-asked-during-the-clarification-call-and-how-the-answers-shaped-the-design)). Implemented as [`pipeline/pipeline/clients/cmms.py::CmmsClient._request()`](pipeline/pipeline/clients/cmms.py#L110)'s retry loop, [`_backoff_sleep()`](pipeline/pipeline/clients/cmms.py#L173) for the exponential-plus-jitter part, `max_retries` defaulting to 3 and configurable via `CMMS_HTTP_MAX_RETRIES`. The global CMMS limit must be respected across the whole run, not independently per task -- the sandbox client's own `_RateLimiter` is a per-process sliding window (proactive, not just reactive to 429s), which is enough here since it's a single process either way; the production mitigation is the concurrency-limited queue for the CMMS-calling tasks described in section 2.
 
 ### Non-retryable failures
 
@@ -426,5 +426,9 @@ The statement is deliberately incomplete in several places; these are the questi
 6. **Q: What should happen when a counter appears to decrease, or no GOOD reading exists for a day -- repair it automatically, or leave it to engineering judgement?**
    A: engineering judgement; the business did not mandate an automatic fix.
    Impact: led to the conservative quarantine policy (never infer a new baseline, never fabricate a value), which then held up against two independent real cases found in the sandbox: an inflated CMMS seed value that would otherwise have masked genuine data, and a real counter reset that needs a human to acknowledge before the baseline can move again.
+
+7. **Q: For the exponential-backoff retry policy, what's the maximum retry count?**
+   A: 3.
+   Impact: [`clients/cmms.py::CmmsClient`](pipeline/pipeline/clients/cmms.py#L92)'s `max_retries` default and `CMMS_HTTP_MAX_RETRIES`'s default both set to 3 (section 7).
 
 These answers are recorded again, alongside the sandbox evidence for each, in [`DECISIONS.md`](DECISIONS.md).

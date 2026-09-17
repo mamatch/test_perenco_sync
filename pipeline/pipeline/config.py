@@ -47,7 +47,7 @@ class Settings:
     # Business thresholds / non-functional requirements (docs/02_business_rules.md, ARCHITECTURE_.md)
     archive_ratio_threshold: float = field(default_factory=lambda: float(os.getenv("ARCHIVE_RATIO_THRESHOLD", "0.10")))
     cmms_rate_limit_per_minute: int = field(default_factory=lambda: int(os.getenv("CMMS_RATE_LIMIT_PER_MINUTE", "50")))
-    http_max_retries: int = field(default_factory=lambda: int(os.getenv("CMMS_HTTP_MAX_RETRIES", "6")))
+    http_max_retries: int = field(default_factory=lambda: int(os.getenv("CMMS_HTTP_MAX_RETRIES", "3")))
     http_timeout_seconds: float = field(default_factory=lambda: float(os.getenv("CMMS_HTTP_TIMEOUT", "10")))
 
     dry_run: bool = field(default_factory=lambda: _bool("SYNC_DRY_RUN", False))
