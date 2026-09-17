@@ -33,7 +33,7 @@ Confirmed on the clarification call: Celery already runs in production today on 
 
 ### Alternative: Azure Container Apps Jobs
 
-Whether Celery serves anything beyond this one legacy chain in MDAdmin is still unconfirmed ([`DECISIONS.md`](DECISIONS.md#L15)). If it turns out to serve nothing else, and Perenco would rather retire it from MDAdmin than keep it running for three nightly tasks, **Azure Container Apps Jobs on a cron trigger** is the alternative: no broker, worker or Beat process to operate at all. Since Celery is already running rather than something to newly provision, choosing this alternative would be a deliberate decommissioning decision, not a technical necessity created by this integration.
+Whether Celery serves anything beyond this one legacy chain in MDAdmin is still unconfirmed ([`DECISIONS.md`](DECISIONS.md#L16)). If it turns out to serve nothing else, and Perenco would rather retire it from MDAdmin than keep it running for three nightly tasks, **Azure Container Apps Jobs on a cron trigger** is the alternative: no broker, worker or Beat process to operate at all. Since Celery is already running rather than something to newly provision, choosing this alternative would be a deliberate decommissioning decision, not a technical necessity created by this integration.
 
 ---
 
@@ -45,7 +45,7 @@ An MDM object is active when `date_start <= now()` and `date_end` is null or `> 
 
 ### Destructive-action policy
 
-The 10% archive threshold is a **hard stop for destructive actions only**. Therefore a run may continue with non-destructive CREATE/UPDATE operations while ARCHIVE operations are blocked when the threshold is exceeded.
+The 10% archive threshold is a **hard stop for destructive actions only**, scoped that way because the brief itself asks for "safety rails against destructive runs." Whether that also means the block should stay confined to the ARCHIVE subset, rather than halting the whole run, isn't spelled out -- a documented assumption ([`DECISIONS.md` #8](DECISIONS.md#L10)): a run may continue with non-destructive CREATE/UPDATE operations while ARCHIVE operations are blocked when the threshold is exceeded.
 
 ![Destructive-action policy](./images/destruction_policy.png)
 

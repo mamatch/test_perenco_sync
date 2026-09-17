@@ -3,7 +3,7 @@ path (clients/mdadmin.py::apply_plan, which shells out to systemref_lite's
 Django management command) is monkeypatched to a fast in-memory fake here --
 the real subprocess/ORM behaviour is covered by
 systemref_lite/systemref/tests/test_apply_sync_plan.py and was verified live
-against the sandbox (DECISIONS.md #13). This file is about the orchestration
+against the sandbox. This file is about the orchestration
 around it: governed-reference rejection, the plan/pending bookkeeping, and
 the disappeared-asset reconciliation pass.
 """
