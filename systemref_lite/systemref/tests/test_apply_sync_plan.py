@@ -3,7 +3,7 @@ coming from outside this app's process ever lands in governed master data
 (see pipeline/pipeline/clients/mdadmin.py and ARCHITECTURE_.md section 4).
 Exercises the ORM upsert/close/assign paths and, most importantly, that a
 plan with one invalid entry rolls back as a whole (no partial write) --
-see DECISIONS.md #11's "all-or-nothing" claim.
+see DECISIONS.md #10's "all-or-nothing" claim.
 """
 
 from __future__ import annotations

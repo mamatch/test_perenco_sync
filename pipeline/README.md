@@ -56,7 +56,7 @@ actually execute end to end: `ARCHIVE_RATIO_THRESHOLD=0.5 uv run python -m pipel
   real quirks (429 with `Retry-After`, ~3% 5xx, `Filter` hiding `archived`), and explicit
   rejection reporting for CMMS -> MDM instead of silent fixes. MDM writes (CMMS -> MDM
   direction) go through a Django management command inside `systemref_lite`
-  (`apply_sync_plan`, additive-only -- see DECISIONS.md #11), not raw SQL from this
+  (`apply_sync_plan`, additive-only -- see DECISIONS.md #10), not raw SQL from this
   service; a failed apply rolls back as one transaction and every pending action is
   recorded `FAILED_RETRYABLE`, never a partial write.
 - **Part C**: `pipeline/audit.py` (SQLite `runs` / `actions` / `dq_issues` /
@@ -82,7 +82,7 @@ actually execute end to end: `ARCHIVE_RATIO_THRESHOLD=0.5 uv run python -m pipel
 ## What is not done
 
 - No dbt/Snowflake, and Celery orchestration is documented but not stood up here (see
-  DECISIONS.md #10/#11 for why, and how the code already maps onto that target).
+  ARCHITECTURE_.md section 2 for why, and how the code already maps onto that target).
 - No real dashboard: the health summary is text + the SQLite audit tables are meant to
   be queried directly. A production dashboard (Grafana/Metabase on top of the same
   `runs`/`actions`/`dq_issues`/`run_metrics` tables, or their Snowflake equivalent) would
@@ -92,11 +92,10 @@ actually execute end to end: `ARCHIVE_RATIO_THRESHOLD=0.5 uv run python -m pipel
   extraction), the archive ratio against its threshold, and a "data quality" panel listing
   open `dq_issues` grouped by `reason`, since that is the view the business would use to
   answer "who fixes a system without a section?" without reading logs.
-- Existing-platform body/site reassignment is reported, not auto-applied (DECISIONS.md
-  #11).
+- Existing-platform body/site reassignment is reported, not auto-applied.
 - No per-worker/shared rate limiting across multiple concurrent workers -- this is a
   single-process CLI; ARCHITECTURE_.md section 2 already describes the production
   evolution (a concurrency cap on the CMMS-calling Celery queue).
 - The dispatch to `apply_sync_plan` is a `subprocess.run(["uv", "run", "manage.py", ...])`
   call, not the Celery task dispatch production would use -- the sandbox-appropriate stand-in
-  for "triggering execution inside MDAdmin's process" (DECISIONS.md #11).
+  for "triggering execution inside MDAdmin's process" (DECISIONS.md #10).
