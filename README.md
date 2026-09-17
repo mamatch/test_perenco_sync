@@ -54,13 +54,7 @@ if you skip it.
 
 ## 2. Design document (Part A)
 
-**[`ARCHITECTURE_.md`](ARCHITECTURE_.md)** — target architecture and data flows for the three
-integrations, the orchestration choice and why, ownership/conflict resolution, idempotency,
-ordering, failure handling, safety rails, security, deployment, and how the design maps onto
-Perenco's current Snowflake/dbt/Celery architecture. Section 12 is the list of questions asked
-during the clarification call and how each answer shaped the design, as the deliverable asks;
-questions the call left open are in `DECISIONS.md` instead. Cross-referenced throughout to the
-actual code, so a claim can be checked in one click rather than taken on faith.
+**[`ARCHITECTURE_.md`](ARCHITECTURE_.md)**.
 
 ---
 
