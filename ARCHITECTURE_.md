@@ -33,7 +33,7 @@ Confirmed on the clarification call: Celery already runs in production today on 
 
 ### Alternative: Azure Container Apps Jobs
 
-Whether Celery serves anything beyond this one legacy chain in MDAdmin is still unconfirmed ([`DECISIONS.md`](DECISIONS.md#L16)). If it turns out to serve nothing else, and Perenco would rather retire it from MDAdmin than keep it running for three nightly tasks, **Azure Container Apps Jobs on a cron trigger** is the alternative: no broker, worker or Beat process to operate at all. Since Celery is already running rather than something to newly provision, choosing this alternative would be a deliberate decommissioning decision, not a technical necessity created by this integration.
+Whether Celery serves anything beyond this one legacy chain in MDAdmin is still unconfirmed ([`DECISIONS.md`](DECISIONS.md#L17)). If it turns out to serve nothing else, and Perenco would rather retire it from MDAdmin than keep it running for three nightly tasks, **Azure Container Apps Jobs on a cron trigger** is the alternative: no broker, worker or Beat process to operate at all. Since Celery is already running rather than something to newly provision, choosing this alternative would be a deliberate decommissioning decision, not a technical necessity created by this integration.
 
 ---
 
@@ -86,6 +86,8 @@ For each entity, compare a canonical representation rather than raw database row
 - **BLOCKED:** an otherwise valid archive cannot be executed safely, for example because active children remain.
 
 All six outcomes are produced by [`compute_plan()`](pipeline/pipeline/canonical.py#L84) and exercised individually in [`pipeline/tests/test_canonical.py`](pipeline/tests/test_canonical.py) ([`test_create_for_desired_absent_from_cmms`](pipeline/tests/test_canonical.py#L12), [`test_noop_when_identical`](pipeline/tests/test_canonical.py#L20), [`test_update_on_name_drift_mdm_wins`](pipeline/tests/test_canonical.py#L27), [`test_unarchive_when_back_in_scope`](pipeline/tests/test_canonical.py#L35), [`test_archive_candidate_when_out_of_scope_and_no_active_children`](pipeline/tests/test_canonical.py#L43), [`test_archive_blocked_by_active_descendant`](pipeline/tests/test_canonical.py#L51)).
+
+The business rule behind that UPDATE case is "the MDM is the reference for names," leaving how far to propagate a rename as an open call. The name in that diff is a Platform/Section name -- the only kind the MDM masters -- overwritten on the CMMS unconditionally on every run, never cascaded into System/Equipment names, which the CMMS supplies in the other direction ([`DECISIONS.md` #9](DECISIONS.md#L11)).
 
 ### Ordering
 
