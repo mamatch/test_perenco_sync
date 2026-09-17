@@ -33,8 +33,8 @@ option, one-integration-at-a-time commands, and the idempotency proof in full.
   empty-snapshot guard, retry/backoff/rate-limiting against the mock's real quirks (429 with
   `Retry-After`, ~3% 5xx, `Filter` hiding `archived`), and explicit rejection reporting for
   CMMS → MDM instead of silent fixes. MDM writes (CMMS → MDM direction) go through a Django
-  management command inside `systemref_lite` (`apply_sync_plan`, additive-only — see
-  `DECISIONS.md` #10), not raw SQL from this service; a failed apply rolls back as one transaction
+  management command inside `systemref_lite` (`apply_sync_plan`, additive-only), not raw SQL
+  from this service; a failed apply rolls back as one transaction
   and every pending action is recorded `FAILED_RETRYABLE`, never a partial write.
 - **Part C**: a run/audit SQLite store (`runs`/`actions`/`dq_issues`/`run_metrics`/`alerts`), a
   text health summary + alert rules printed after every run, one implemented alert condition
@@ -55,7 +55,7 @@ option, one-integration-at-a-time commands, and the idempotency proof in full.
 - No per-worker/shared rate limiting across multiple concurrent workers — this is a single-process
   CLI; `ARCHITECTURE_.md` section 2 describes the production evolution.
 - The MDM write dispatch is a `subprocess.run(["uv", "run", "manage.py", ...])` call, not the
-  Celery task dispatch production would use — the sandbox-appropriate stand-in (`DECISIONS.md` #10).
+  Celery task dispatch production would use — the sandbox-appropriate stand-in.
 
 Full detail on all of the above: **[`pipeline/README.md`](pipeline/README.md)**.
 
@@ -80,7 +80,7 @@ actual code, so a claim can be checked in one click rather than taken on faith.
 
 - **Delta computation** — `pipeline/tests/test_canonical.py` (every `compute_plan()` outcome:
   CREATE/UPDATE/UNARCHIVE/NOOP/BLOCKED, the archive-ratio threshold, recursive active-descendant
-  blocking, a same-run parent+child archive edge case caught by testing — see `DECISIONS.md` #2);
+  blocking, a same-run parent+child archive edge case caught by testing — see `DECISIONS.md` #1);
   `pipeline/tests/test_mdm_to_cmms_run.py` and `test_cmms_to_mdm_run.py` exercise the same logic
   end to end (empty-snapshot guard, failed-parent propagation, governed-reference rejections, the
   disappeared-asset reconciliation pass, the write-plan apply/rollback).

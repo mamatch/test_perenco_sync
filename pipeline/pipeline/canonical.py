@@ -176,7 +176,7 @@ def compute_plan(
     # (sections before platforms) and track which codes were already accepted
     # for archiving this run (`resolved_ok`), so a platform whose only section
     # is *also* being archived right now doesn't get wrongly blocked by its
-    # own about-to-disappear child -- see DECISIONS.md #2.
+    # own about-to-disappear child -- see DECISIONS.md #1.
     eligible: list[PlannedAction] = []
     blocked: list[PlannedAction] = []
     resolved_ok: set[str] = set()
