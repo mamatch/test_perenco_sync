@@ -1,9 +1,3 @@
-# DECISIONS
-
-Assumptions made where the statement was ambiguous, each checked against real sandbox
-data rather than left as a guess, and the questions I'd still want the business to answer.
-One sentence each; the code/test link behind each item is where the evidence lives.
-
 ## Assumptions
 
 1. **`Asset/Filter` never returns `archived`.** Every read pulls the CMMS tree twice (once per `archived` value) instead of calling `Asset/Get` per asset, which wouldn't scale to production volumes ([`mdm_to_cmms.py::_current_tree()`](pipeline/pipeline/mdm_to_cmms.py#L25)).
