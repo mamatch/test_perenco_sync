@@ -201,6 +201,8 @@ The business leaves these cases to engineering judgment. The proposed policy is 
 
 This favours data integrity over silent interpolation and isolates one bad machine/day from the rest of the batch. Both branches live in [`iot_to_cmms.py::run()`](pipeline/pipeline/iot_to_cmms.py#L35)'s per-asset, per-day loop; the regression baseline is [`iot_to_cmms.py::_baseline_value()`](pipeline/pipeline/iot_to_cmms.py#L146), which prefers what the pipeline itself last sent ([`audit.py::AuditStore.last_sent_meter()`](pipeline/pipeline/audit.py#L201)) over the CMMS's live value, so a regression is judged against our own history even if the CMMS value was edited independently. Held up against two distinct real cases in the sandbox, not just the specified example: an inflated CMMS seed value and a genuine counter reset ([`DECISIONS.md` #6](DECISIONS.md#L8)).
 
+---
+
 ## 6. Idempotency and state management
 
 The central rule is: **compute desired state, compare with current state, write only the delta**.
@@ -307,8 +309,8 @@ Operational metrics should include:
 
 Implemented as [`audit.py::AuditStore.action_counts()`](pipeline/pipeline/audit.py#L223) (the CREATE/UPDATE/.../REJECTED breakdown), `run_metrics` rows written throughout each integration (e.g. `mdm_desired_platforms_active`, `cmms_assets_seen_total`, `iot_counter_regressions`), and `CmmsClient.calls`/`.retries` for API call/retry counts -- all printed together at the end of every run by [`pipeline/pipeline/observability.py::health_summary()`](pipeline/pipeline/observability.py#L46). Run duration and freshness are the `runs.started_at`/`finished_at` columns, queryable directly; not yet surfaced as a computed metric.
 
-A useful alert is a destructive-action anomaly such as archive ratio exceeding the configured threshold. Implemented as one of several rules in [`observability.py::evaluate_alerts()`](pipeline/pipeline/observability.py#L21): the archive-ratio breach (raised where it's detected, in [`canonical.py`](pipeline/pipeline/canonical.py)/[`mdm_to_cmms.py`](pipeline/pipeline/mdm_to_cmms.py)), plus a rejection/failure-rate-spike rule (>20% of a run's actions), and two IoT-specific INFO alerts (counter regressions, unresolved tags) -- printed as `ALERT[severity] message` after the health summary. No dashboard is stood up in the sandbox (`README.md`'s "What is not done"); the dashboard
-operations would actually use day to day would show, per run: source/target record counts, a
+A useful alert is a destructive-action anomaly such as archive ratio exceeding the configured threshold. Implemented as one of several rules in [`observability.py::evaluate_alerts()`](pipeline/pipeline/observability.py#L21): the archive-ratio breach (raised where it's detected, in [`canonical.py`](pipeline/pipeline/canonical.py)/[`mdm_to_cmms.py`](pipeline/pipeline/mdm_to_cmms.py)), plus a rejection/failure-rate-spike rule (>20% of a run's actions), and two IoT-specific INFO alerts (counter regressions, unresolved tags) -- printed as `ALERT[severity] message` after the health summary. No dashboard is stood up in the sandbox (`README.md`'s "What is not done") -- day to day, operations
+would use one that shows, per run: source/target record counts, a
 CREATE/UPDATE/ARCHIVE/NOOP/BLOCKED/REJECTED trend, API error rate, freshness, archive ratio vs.
 threshold, and an open-`dq_issues`-by-`reason` panel, all sourced from the same tables
 Snowflake/Grafana would eventually read too.
