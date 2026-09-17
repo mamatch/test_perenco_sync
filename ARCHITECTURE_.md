@@ -29,20 +29,11 @@ The design is based on eight principles:
 
 ### Why Celery, not a new orchestrator
 
-Confirmed on the clarification call: Celery already runs in production today on the MDAdmin/Django instance itself ([`docs/01_context.md`](docs/01_context.md#L35) describes its one existing five-step chain there). It is live infrastructure, not something this design would introduce. Repointing it at three new, independent tasks is additive to what already runs; bringing in a second "how do we schedule background work" mechanism (Airflow) purely for this integration would not be, and nothing about these three tasks needs a DAG tool: they have no ordering dependency on each other (each owns a disjoint slice of state -- platforms/sections, systems/equipments, meters), unlike the old chain's five sequential steps, so a Celery `group` replaces it directly:
-
-```text
-nightly_sync (Celery group, triggered by Beat)
-├── mdm_to_cmms_task    → pipeline.mdm_to_cmms.run()
-├── cmms_to_mdm_task    → pipeline.cmms_to_mdm.run()
-└── iot_to_cmms_task    → pipeline.iot_to_cmms.run()
-```
-
-Celery is responsible for **when and in which order** work runs, not for API retry/rate-limit logic -- that stays in the sync service's own client layer, as it already does in the `pipeline/` prototype ([`clients/cmms.py::CmmsClient`](pipeline/pipeline/clients/cmms.py#L85)). The one thing this repointed setup still owes the CMMS is what section 7 already requires: its rate budget has to be respected across the whole run, not per task in isolation -- a single concurrency-limited queue for the CMMS-calling tasks is enough for that, since it's one instance rather than a worker fleet.
+Confirmed on the clarification call: Celery already runs in production today on the MDAdmin/Django instance itself ([`docs/01_context.md`](docs/01_context.md#L35) describes its one existing chain there). It is live infrastructure, not something this design would introduce, so repointing it at three new, independent nightly tasks is additive to what already runs rather than bringing in a second orchestration mechanism. The CMMS rate budget still has to be respected across the whole run, not per task in isolation -- a single concurrency-limited queue for the CMMS-calling tasks covers that.
 
 ### Alternative: Azure Container Apps Jobs
 
-Whether Celery serves anything beyond this one legacy chain in MDAdmin is still unconfirmed ([`DECISIONS.md`](DECISIONS.md#L15)). If it turns out to serve nothing else, and Perenco would rather retire it from MDAdmin than keep it running for three nightly tasks, **Azure Container Apps Jobs on a cron trigger** is the alternative: no broker, worker or Beat process to operate at all, native per-job retry, execution history through Azure Monitor. The cost is no native cross-task dependency graph if requirements ever grow past three independent branches, and a "job never fired at all" failure mode that needs its own dead-man's-switch alert, where a DAG-oriented tool would surface a missing run more passively. Since Celery is already running rather than something to newly provision, choosing this alternative would be a deliberate decommissioning decision, not a technical necessity created by this integration.
+Whether Celery serves anything beyond this one legacy chain in MDAdmin is still unconfirmed ([`DECISIONS.md`](DECISIONS.md#L15)). If it turns out to serve nothing else, and Perenco would rather retire it from MDAdmin than keep it running for three nightly tasks, **Azure Container Apps Jobs on a cron trigger** is the alternative: no broker, worker or Beat process to operate at all. Since Celery is already running rather than something to newly provision, choosing this alternative would be a deliberate decommissioning decision, not a technical necessity created by this integration.
 
 ---
 
