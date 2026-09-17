@@ -56,7 +56,7 @@ actually execute end to end: `ARCHIVE_RATIO_THRESHOLD=0.5 uv run python -m pipel
   real quirks (429 with `Retry-After`, ~3% 5xx, `Filter` hiding `archived`), and explicit
   rejection reporting for CMMS -> MDM instead of silent fixes. MDM writes (CMMS -> MDM
   direction) go through a Django management command inside `systemref_lite`
-  (`apply_sync_plan`, additive-only -- see DECISIONS.md #12), not raw SQL from this
+  (`apply_sync_plan`, additive-only -- see DECISIONS.md #11), not raw SQL from this
   service; a failed apply rolls back as one transaction and every pending action is
   recorded `FAILED_RETRYABLE`, never a partial write.
 - **Part C**: `pipeline/audit.py` (SQLite `runs` / `actions` / `dq_issues` /
@@ -99,4 +99,4 @@ actually execute end to end: `ARCHIVE_RATIO_THRESHOLD=0.5 uv run python -m pipel
   evolution (a concurrency cap on the CMMS-calling Celery queue).
 - The dispatch to `apply_sync_plan` is a `subprocess.run(["uv", "run", "manage.py", ...])`
   call, not the Celery task dispatch production would use -- the sandbox-appropriate stand-in
-  for "triggering execution inside MDAdmin's process" (DECISIONS.md #12).
+  for "triggering execution inside MDAdmin's process" (DECISIONS.md #11).

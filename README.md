@@ -34,7 +34,7 @@ option, one-integration-at-a-time commands, and the idempotency proof in full.
   `Retry-After`, ~3% 5xx, `Filter` hiding `archived`), and explicit rejection reporting for
   CMMS → MDM instead of silent fixes. MDM writes (CMMS → MDM direction) go through a Django
   management command inside `systemref_lite` (`apply_sync_plan`, additive-only — see
-  `DECISIONS.md` #12), not raw SQL from this service; a failed apply rolls back as one transaction
+  `DECISIONS.md` #11), not raw SQL from this service; a failed apply rolls back as one transaction
   and every pending action is recorded `FAILED_RETRYABLE`, never a partial write.
 - **Part C**: a run/audit SQLite store (`runs`/`actions`/`dq_issues`/`run_metrics`/`alerts`), a
   text health summary + alert rules printed after every run, one implemented alert condition
@@ -55,7 +55,7 @@ option, one-integration-at-a-time commands, and the idempotency proof in full.
 - No per-worker/shared rate limiting across multiple concurrent workers — this is a single-process
   CLI; `ARCHITECTURE_.md` section 2 describes the production evolution.
 - The MDM write dispatch is a `subprocess.run(["uv", "run", "manage.py", ...])` call, not the
-  Celery task dispatch production would use — the sandbox-appropriate stand-in (`DECISIONS.md` #12).
+  Celery task dispatch production would use — the sandbox-appropriate stand-in (`DECISIONS.md` #11).
 
 Full detail on all of the above: **[`pipeline/README.md`](pipeline/README.md)**.
 
