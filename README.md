@@ -42,15 +42,8 @@ if you skip it.
 
 - No dbt/Snowflake, and Celery orchestration is documented but not stood up here (see
   `ARCHITECTURE_.md` section 2 for why, and how the code already maps onto that target).
-- No real dashboard: the health summary is text + the SQLite audit tables are meant to be queried
-  directly. A production dashboard (Grafana/Metabase on top of the same
-  `runs`/`actions`/`dq_issues`/`run_metrics` tables, or their Snowflake equivalent) would show, per
-  run: source/target record counts, CREATE/UPDATE/ARCHIVE/NOOP/BLOCKED/REJECTED breakdowns (as a
-  stacked bar over the last 30 runs, to spot trend changes), API error rate and retry count, run
-  duration and source freshness (time since the last successful extraction), the archive ratio
-  against its threshold, and a "data quality" panel listing open `dq_issues` grouped by `reason`,
-  since that is the view the business would use to answer "who fixes a system without a section?"
-  without reading logs.
+- No real dashboard: the health summary is text, and the SQLite audit tables are meant to be
+  queried directly instead.
 - Existing-platform body/site reassignment is reported, not auto-applied.
 - No per-worker/shared rate limiting across multiple concurrent workers — this is a single-process
   CLI; `ARCHITECTURE_.md` section 2 describes the production evolution.
