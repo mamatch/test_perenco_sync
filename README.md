@@ -1,155 +1,107 @@
-> ## Candidate solution — start here
->
-> This is the original exercise brief, kept as received below. My submission:
->
-> - **[`ARCHITECTURE_.md`](ARCHITECTURE_.md)** — Part A, including the clarification-call
->   questions and how each answer shaped the design (section 12).
-> - **[`pipeline/`](pipeline/README.md)** — Parts B/C/D: the working, tested sync. Run it with
->   `make sync` (see below) or `cd pipeline && uv run python -m pipeline run-all`.
-> - **[`DECISIONS.md`](DECISIONS.md)** — assumptions made against real sandbox data, and the
->   questions the clarification call left open.
->
-> `make up && make sync` runs the whole thing end to end against a fresh sandbox.
+# Perenco MDM ⇄ CMMS ⇄ IoT sync — submission
+
+The exercise brief is kept as received in **[`INSTRUCTIONS.md`](INSTRUCTIONS.md)**. This README is
+organized around that brief's own [Deliverables list](INSTRUCTIONS.md#deliverables), one section per
+bullet.
+
+```bash
+make up && make sync   # runs the whole thing end to end against a fresh sandbox
+```
 
 ---
 
-# Data Engineering Architect — technical exercise
+## 1. Repository — how to run, what is done, what is not
 
-**Perenco Data Office · MDM ⇄ CMMS synchronisation**
-
-You are asked to design and build the synchronisation between our master data repository (MDM),
-our maintenance system (CMMS, DIMO Maint MX) and an IoT historian, on a sandbox that reproduces the
-real systems. We are as interested in your **architecture and reasoning** as in the code.
-
-## How it works
-
-| Step | When | What |
-|---|---|---|
-| 1. Read | Day 0 | You receive this repository. Read everything in `docs/`, start the sandbox, explore the data. |
-| 2. Clarification call | Day 1 (30 min) | Ask us anything about the business, the systems, the constraints. The statement is deliberately incomplete in places: finding the right questions is part of the exercise. |
-| 3. Build | Days 2–3 | Deliver your work (see *Deliverables*). |
-| 4. Debrief | after | 75 min: 15 min presentation by you; 20 min where we run your pipeline on a fresh sandbox with events of our choosing; 20 min where we ask you to change something in your pipeline live, with us watching; 20 min of questions. |
-
-## The sandbox (Docker)
-
-Prerequisites: Docker with Compose. Python 3.12 + [uv](https://docs.astral.sh/uv/) recommended for your own code.
+### How to run
 
 ```bash
-docker compose up -d --build         # CMMS mock on :8080, MDM on :8000 (MDM_PORT=8001 docker compose up -d to change)
-open http://localhost:8080/docs      # CMMS connector API (Swagger UI)
-open http://localhost:8000/admin/    # MDM admin (admin / admin)
-ls mdm_data/                         # the MDM SQLite database, readable/writable from your machine
-ls iot_historian/exports/            # daily historian CSV exports
-docker compose down -v && rm -rf mdm_data   # fresh start
+make up                                          # Docker: CMMS mock on :8080, MDM on :8000
+make sync                                        # all three integrations, in order
+curl -s http://localhost:8080/_admin/PERENCO/calls   # check "writes" — run `make sync` again, unchanged
 ```
 
-Documentation, in reading order:
+Without Docker: `make local-cmms` and `make local-mdm-seed && make local-mdm` in two other shells,
+then `make sync`. All tunable values (CMMS connection, thresholds, paths) live in one place, `.env`
+(copy `.env.example` to get one) — see **[`pipeline/README.md`](pipeline/README.md)** for every
+option, one-integration-at-a-time commands, and the idempotency proof in full.
 
-1. [`docs/01_context.md`](docs/01_context.md) — the systems and our current production architecture
-2. [`docs/02_business_rules.md`](docs/02_business_rules.md) — ownership, scope and mapping rules
-3. [`docs/03_cmms_api.md`](docs/03_cmms_api.md) — the CMMS connector API and its quirks (`docs/openapi.json`)
-4. [`docs/04_mdm_and_iot.md`](docs/04_mdm_and_iot.md) — the MDM data model and the IoT exports
-5. [`docs/05_warehouse_hints.md`](docs/05_warehouse_hints.md) — DuckDB or Snowflake
+### What is done
 
-## What we ask you to build
+- **Part A**: **[`ARCHITECTURE_.md`](ARCHITECTURE_.md)** — see section 2 below.
+- **Part B**: all three flows, ordering (parent-before-child create, child-before-parent archive),
+  the 10% destructive-only archive-ratio safety rail, recursive active-descendant protection, the
+  empty-snapshot guard, retry/backoff/rate-limiting against the mock's real quirks (429 with
+  `Retry-After`, ~3% 5xx, `Filter` hiding `archived`), and explicit rejection reporting for
+  CMMS → MDM instead of silent fixes. MDM writes (CMMS → MDM direction) go through a Django
+  management command inside `systemref_lite` (`apply_sync_plan`, additive-only — see
+  `DECISIONS.md` #13), not raw SQL from this service; a failed apply rolls back as one transaction
+  and every pending action is recorded `FAILED_RETRYABLE`, never a partial write.
+- **Part C**: a run/audit SQLite store (`runs`/`actions`/`dq_issues`/`run_metrics`/`alerts`), a
+  text health summary + alert rules printed after every run, one implemented alert condition
+  (archive ratio > 10%) plus a few more (rejection-rate spike, counter regressions, unresolved IoT
+  tags).
+- **Part D**: tag resolution (equipment-code convention, with a system-class-shorthand fallback
+  confirmed against real seed values), unit conversion, daily maximum-timestamp selection,
+  counter-regression quarantine, dedupe on `(tag_id, timestamp_utc)` across overlapping exports.
 
-Work in your own repository (or a folder next to this one). Your pipeline may be written in Python
-and SQL, with DuckDB or a Snowflake trial account as the warehouse, dbt if you like. Keep it runnable
-with one command against a fresh sandbox.
+### What is not done
 
-### Part A — Architecture (must have)
+- No dbt/Snowflake, and Celery orchestration is documented but not stood up here (see
+  `DECISIONS.md` #11/#12 for why, and how the code already maps onto that target).
+- No real dashboard: the health summary is text + the SQLite audit tables are meant to be queried
+  directly. `pipeline/README.md` sketches what a production dashboard (Grafana/Metabase on the same
+  tables) would show.
+- Existing-platform body/site reassignment is reported, not auto-applied (`DECISIONS.md` #11).
+- No per-worker/shared rate limiting across multiple concurrent workers — this is a single-process
+  CLI; `ARCHITECTURE_.md` section 2 describes the production evolution.
+- The MDM write dispatch is a `subprocess.run(["uv", "run", "manage.py", ...])` call, not the
+  Celery task dispatch production would use — the sandbox-appropriate stand-in (`DECISIONS.md` #13).
 
-A design document (Markdown, 3 to 6 pages, diagrams welcome) covering:
+Full detail on all of the above: **[`pipeline/README.md`](pipeline/README.md)**.
 
-* target architecture and data flows for the three integrations (MDM → CMMS, CMMS → MDM, IoT → CMMS),
-  with the orchestration you would use in production and why;
-* data ownership and conflict resolution, idempotency, ordering (parents before children when
-  creating, children before parents when archiving);
-* failure handling: retries, rate limiting, partial failures, poison messages, replay;
-* safety rails against destructive runs (what would you refuse to do automatically?);
-* security (API keys, secrets, least privilege) and deployment (CI/CD, environments);
-* how your design maps onto, or departs from, our current Snowflake / dbt / Celery architecture
-  (`docs/01_context.md`) — be candid about trade-offs.
+---
 
-### Part B — Bidirectional synchronisation (must have)
+## 2. Design document (Part A)
 
-Working code that, against the sandbox:
+**[`ARCHITECTURE_.md`](ARCHITECTURE_.md)** — target architecture and data flows for the three
+integrations, the orchestration choice and why, ownership/conflict resolution, idempotency,
+ordering, failure handling, safety rails, security, deployment, and how the design maps onto
+Perenco's current Snowflake/dbt/Celery architecture. Section 12 is the list of questions asked
+during the clarification call and how each answer shaped the design, as the deliverable asks;
+questions the call left open are in `DECISIONS.md` instead. Cross-referenced throughout to the
+actual code, so a claim can be checked in one click rather than taken on faith.
 
-1. **MDM → CMMS**: creates the missing platforms and sections, archives the ones that
-   left the scope, reports the discrepancies it decides not to fix automatically (bodies, orphans
-   with children, suspicious cases).
-2. **CMMS → MDM**: upserts systems and equipments into `mdm_data/systemref.sqlite3` with their
-   class/type, section, platform, criticality and validity, and reports what it rejects.
-3. Is **idempotent**: a second run right after the first produces zero writes
-   (`GET /_admin/PERENCO/calls` shows `writes`).
-4. Survives the API as configured: rate limit, transient 5xx, pagination.
+---
 
-### Part C — Observability (differentiating)
+## 3. Tests where they matter
 
-We operate this pipeline every night, and it has bitten us before. Show us how you would know it is
-healthy:
+65 tests total, no server needed: `cd pipeline && uv run pytest -q` (59) and
+`cd systemref_lite && uv run pytest -q` (6).
 
-* a run/audit model: every run has an id, every action (API call, MDM write, rejected row) is
-  traceable to it, with enough context to replay or explain it;
-* metrics you would compute per run (volumes, creations, archives, rejects, API error rate,
-  duration, freshness) and **alert rules** with thresholds — implement at least the metrics and one
-  alert condition (e.g. "the run wants to archive more than N % of the active platforms");
-* a health summary at the end of a run (text or table is fine) and a sketch of the dashboard you
-  would give to the operations team;
-* how you would surface data-quality issues to the business owners (who fixes a system without a
-  section? a typo in a criticality label?).
+- **Delta computation** — `pipeline/tests/test_canonical.py` (every `compute_plan()` outcome:
+  CREATE/UPDATE/UNARCHIVE/NOOP/BLOCKED, the archive-ratio threshold, recursive active-descendant
+  blocking, a same-run parent+child archive edge case caught by testing — see `DECISIONS.md` #3);
+  `pipeline/tests/test_mdm_to_cmms_run.py` and `test_cmms_to_mdm_run.py` exercise the same logic
+  end to end (empty-snapshot guard, failed-parent propagation, governed-reference rejections, the
+  disappeared-asset reconciliation pass, the write-plan apply/rollback).
+- **Mapping rules** — `pipeline/tests/test_iot.py::test_resolve_tag_*` (the historian tag → CMMS
+  asset convention, direct match and the system-class-shorthand fallback); the governed-reference
+  lookups (system class, section category, equipment type) are exercised through
+  `test_cmms_to_mdm_run.py`.
+- **IoT cleaning** — `pipeline/tests/test_iot.py` (dedupe on overlapping exports, unit conversion,
+  daily maximum-timestamp selection) and `pipeline/tests/test_iot_to_cmms_run.py` (the
+  counter-regression quarantine end to end, idempotent re-send, no-GOOD-reading handling).
+- The MDM write path itself (`apply_sync_plan`, including the all-or-nothing transaction rollback
+  on an invalid entry) is covered separately in
+  `systemref_lite/systemref/tests/test_apply_sync_plan.py`, since it runs through Django's ORM.
+- Also tested: the CMMS client's retry/rate-limit/pagination behaviour
+  (`pipeline/tests/test_cmms_client.py`), the audit/observability layer
+  (`pipeline/tests/test_audit.py`, `test_observability.py`).
 
-### Part D — Running hours from the IoT historian (differentiating)
+---
 
-The maintenance team wants the running-hours counters of the rotating machines in the CMMS, so that
-preventive maintenance can be triggered on hours rather than on calendar. The historian exports are
-in `iot_historian/exports/`. Build the flow that pushes them into the CMMS meters
-(`Asset/MeterUpdate`), and explain:
+## 4. `DECISIONS.md`
 
-* how you link a historian tag to a CMMS asset, and what you do when you cannot;
-* how you handle overlapping files, bad quality, units, counter resets, and readings the CMMS
-  refuses;
-* what cadence you send at, and why.
-
-### Optional stretch (pick at most one, only if you have time)
-
-* dbt models and tests for the transformation layer;
-* the same pipeline on a Snowflake trial account with a TASK graph;
-* SCD2 history of systems/equipments in the warehouse.
-
-## Deliverables
-
-* Your repository (link or archive) with a README: how to run, what is done, what is not.
-* The design document (Part A), including the list of questions you asked us and how the answers
-  changed your design.
-* Tests where they matter (delta computation, mapping rules, IoT cleaning).
-* A short `DECISIONS.md`: the assumptions you made where the statement was ambiguous, and the
-  questions you would still want answered.
-
-Timebox: about two working days. **Prioritise**: a complete Part A and B with a thin but honest
-Part C beats four half-finished parts. Say what you cut and why.
-
-## Rules of the game
-
-* Your pipeline must only use the connector endpoints with the API key. `/_admin/*` is for you and
-  for us to inspect and reset the sandbox, never for the pipeline.
-* Do not modify the sandbox code (`mock_gmao`, `systemref_lite`) — if you find a bug, tell us, it is
-  worth points.
-* Use whatever libraries and AI assistants you like. The debrief is where it counts: we will ask you
-  to explain and modify your own code live, and to justify each decision against the data you found
-  in the sandbox. Code you cannot explain counts against you.
-* The statement is incomplete on purpose. Several situations in the data are not covered by the
-  rules above; deciding what to do with them, and telling us, is the job.
-* Everything in this repository is fictional data.
-
-## How we evaluate
-
-| Area | Weight | What we look at |
-|---|---|---|
-| Architecture & reasoning | 30 % | Clarity, trade-offs, fit with our constraints, safety rails, honesty about limits |
-| Sync correctness & robustness | 30 % | Rules applied, ordering, idempotency, resilience to the API, data-quality reporting |
-| Observability | 15 % | Traceability model, metrics, alert conditions, what you would show operations |
-| IoT flow | 15 % | Routing through the MDM, data cleaning, respect of the meter semantics |
-| Code & delivery | 10 % | Readability, tests, reproducibility, README, decisions log |
-
-Good luck — and ask questions.
+**[`DECISIONS.md`](DECISIONS.md)** — the assumptions made where the statement was ambiguous, each
+checked against real sandbox data rather than left as a guess, and the questions the clarification
+call left open that a real handoff would still need answered.
