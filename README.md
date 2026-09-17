@@ -4,10 +4,6 @@ The exercise brief is kept as received in **[`INSTRUCTIONS.md`](INSTRUCTIONS.md)
 organized around that brief's own [Deliverables list](INSTRUCTIONS.md#deliverables), one section per
 bullet.
 
-```bash
-make up && make sync   # runs the whole thing end to end against a fresh sandbox
-```
-
 ---
 
 ## 1. Repository — how to run, what is done, what is not
@@ -15,46 +11,13 @@ make up && make sync   # runs the whole thing end to end against a fresh sandbox
 ### How to run
 
 ```bash
-make up                                          # Docker: CMMS mock on :8080, MDM on :8000
-make sync                                        # all three integrations, in order
-curl -s http://localhost:8080/_admin/PERENCO/calls   # check "writes" — run `make sync` again, unchanged
+make up && make sync   # runs the whole thing end to end against a fresh sandbox
 ```
 
 Without Docker: `make local-cmms` and `make local-mdm-seed && make local-mdm` in two other shells,
-then `make sync`. To run the pipeline directly instead of through `make sync`:
-
-```bash
-cd systemref_lite && uv sync && cd ..      # once: cmms_to_mdm dispatches into this venv
-cd pipeline && uv sync
-uv run python -m pipeline run-all          # all three integrations, in order
-uv run python -m pipeline run mdm-to-cmms  # or one at a time
-uv run python -m pipeline run cmms-to-mdm
-uv run python -m pipeline run iot-to-cmms
-uv run pytest -q                           # unit tests, no server needed
-```
-
-All tunable values live in one place, `.env` (repo root, gitignored, copy `.env.example` to get
-one) — an actually-exported environment variable always wins over it, and if neither exists
-`pipeline/config.py`'s own defaults already match the sandbox: `CMMS_BASE_URL`, `CMMS_TENANT`,
-`CMMS_API_KEY`, `SYSTEMREF_DB_PATH`, `SYSTEMREF_LITE_DIR`, `IOT_EXPORTS_DIR`, `AUDIT_DB_PATH`,
-`ARCHIVE_RATIO_THRESHOLD` (default `0.10`), `CMMS_RATE_LIMIT_PER_MINUTE` (default `50`). The MDM
-active-scope rule (`date_start <= as_of and (date_end is null or date_end > as_of)`) is fixed, not
-configurable.
-
-**Idempotency proof**, exactly as the exercise asks for it:
-
-```bash
-curl -s -X POST http://localhost:8080/_admin/PERENCO/reset
-uv run python -m pipeline run-all   # first run: writes happen
-curl -s http://localhost:8080/_admin/PERENCO/calls   # note "writes"
-uv run python -m pipeline run-all   # second run
-curl -s http://localhost:8080/_admin/PERENCO/calls   # "writes" unchanged
-```
-
-The default 10% archive-ratio threshold blocks every archive candidate on this small sandbox (this
-is the guardrail doing its job on a tenant two orders of magnitude smaller than production, not a
-bug — see `DECISIONS.md` #7 for the global-vs-per-body scope this assumes). To see archives
-actually execute end to end: `ARCHIVE_RATIO_THRESHOLD=0.5 uv run python -m pipeline run mdm-to-cmms`.
+then `make sync`. Configuration (CMMS connection, thresholds, paths) lives in one place, `.env`
+(copy `.env.example` to get one) — `pipeline/config.py`'s own defaults already match the sandbox
+if you skip it.
 
 ### What is done
 
