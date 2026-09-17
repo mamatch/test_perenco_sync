@@ -21,9 +21,40 @@ curl -s http://localhost:8080/_admin/PERENCO/calls   # check "writes" — run `m
 ```
 
 Without Docker: `make local-cmms` and `make local-mdm-seed && make local-mdm` in two other shells,
-then `make sync`. All tunable values (CMMS connection, thresholds, paths) live in one place, `.env`
-(copy `.env.example` to get one) — see **[`pipeline/README.md`](pipeline/README.md)** for every
-option, one-integration-at-a-time commands, and the idempotency proof in full.
+then `make sync`. To run the pipeline directly instead of through `make sync`:
+
+```bash
+cd systemref_lite && uv sync && cd ..      # once: cmms_to_mdm dispatches into this venv
+cd pipeline && uv sync
+uv run python -m pipeline run-all          # all three integrations, in order
+uv run python -m pipeline run mdm-to-cmms  # or one at a time
+uv run python -m pipeline run cmms-to-mdm
+uv run python -m pipeline run iot-to-cmms
+uv run pytest -q                           # unit tests, no server needed
+```
+
+All tunable values live in one place, `.env` (repo root, gitignored, copy `.env.example` to get
+one) — an actually-exported environment variable always wins over it, and if neither exists
+`pipeline/config.py`'s own defaults already match the sandbox: `CMMS_BASE_URL`, `CMMS_TENANT`,
+`CMMS_API_KEY`, `SYSTEMREF_DB_PATH`, `SYSTEMREF_LITE_DIR`, `IOT_EXPORTS_DIR`, `AUDIT_DB_PATH`,
+`ARCHIVE_RATIO_THRESHOLD` (default `0.10`), `CMMS_RATE_LIMIT_PER_MINUTE` (default `50`). The MDM
+active-scope rule (`date_start <= as_of and (date_end is null or date_end > as_of)`) is fixed, not
+configurable.
+
+**Idempotency proof**, exactly as the exercise asks for it:
+
+```bash
+curl -s -X POST http://localhost:8080/_admin/PERENCO/reset
+uv run python -m pipeline run-all   # first run: writes happen
+curl -s http://localhost:8080/_admin/PERENCO/calls   # note "writes"
+uv run python -m pipeline run-all   # second run
+curl -s http://localhost:8080/_admin/PERENCO/calls   # "writes" unchanged
+```
+
+The default 10% archive-ratio threshold blocks every archive candidate on this small sandbox (this
+is the guardrail doing its job on a tenant two orders of magnitude smaller than production, not a
+bug — see `DECISIONS.md` #7 for the global-vs-per-body scope this assumes). To see archives
+actually execute end to end: `ARCHIVE_RATIO_THRESHOLD=0.5 uv run python -m pipeline run mdm-to-cmms`.
 
 ### What is done
 
@@ -49,15 +80,19 @@ option, one-integration-at-a-time commands, and the idempotency proof in full.
 - No dbt/Snowflake, and Celery orchestration is documented but not stood up here (see
   `ARCHITECTURE_.md` section 2 for why, and how the code already maps onto that target).
 - No real dashboard: the health summary is text + the SQLite audit tables are meant to be queried
-  directly. `pipeline/README.md` sketches what a production dashboard (Grafana/Metabase on the same
-  tables) would show.
+  directly. A production dashboard (Grafana/Metabase on top of the same
+  `runs`/`actions`/`dq_issues`/`run_metrics` tables, or their Snowflake equivalent) would show, per
+  run: source/target record counts, CREATE/UPDATE/ARCHIVE/NOOP/BLOCKED/REJECTED breakdowns (as a
+  stacked bar over the last 30 runs, to spot trend changes), API error rate and retry count, run
+  duration and source freshness (time since the last successful extraction), the archive ratio
+  against its threshold, and a "data quality" panel listing open `dq_issues` grouped by `reason`,
+  since that is the view the business would use to answer "who fixes a system without a section?"
+  without reading logs.
 - Existing-platform body/site reassignment is reported, not auto-applied.
 - No per-worker/shared rate limiting across multiple concurrent workers — this is a single-process
   CLI; `ARCHITECTURE_.md` section 2 describes the production evolution.
 - The MDM write dispatch is a `subprocess.run(["uv", "run", "manage.py", ...])` call, not the
   Celery task dispatch production would use — the sandbox-appropriate stand-in.
-
-Full detail on all of the above: **[`pipeline/README.md`](pipeline/README.md)**.
 
 ---
 
