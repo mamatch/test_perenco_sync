@@ -6,9 +6,10 @@
 4. **IoT tag resolution is two-step**, direct equipment-code match first, then a system-class shorthand fallback when exactly one such system exists under the platform — both confirmed against real historian values, not just the stated convention ([`iot.py::resolve_tag()`](pipeline/pipeline/iot.py#L95)).
 5. **The historian isn't always in hours**: one tag reports in minutes, converted via a small factor table where an unrecognised unit is rejected rather than guessed, confirmed correct because the converted values land exactly on-trend with the asset's existing CMMS meter ([`iot.py::convert_to_hours()`](pipeline/pipeline/iot.py#L162)).
 6. **Counter regressions are always quarantined, never auto-corrected**, holding up against two distinct real cases in the sandbox: a bad CMMS seed value and a genuine physical counter reset ([`iot_to_cmms.py::_baseline_value()`](pipeline/pipeline/iot_to_cmms.py#L146)).
+7. **The 10% archive-ratio threshold is computed as one global percentage of the current active scope** (not the desired MDM scope, not per body/site) — the simplest implementation for a sandbox two orders of magnitude smaller than production, where the same absolute number of stale objects would be a fraction of a percent ([`canonical.py::compute_plan()`](pipeline/pipeline/canonical.py#L84)).
 
 ## Questions still open
 
-- Should the 10% archive-ratio threshold be computed against the *desired* MDM scope instead of the *current* active scope, and globally or per body/country?
+- Should the archive-ratio threshold (#7) be computed against the *desired* MDM scope instead of the *current* active scope, and globally or per body/country?
 - Is overwriting a `GLOBAL`-sourced row's `source` to `PERENCO` (#2) correct, or should multi-tenant provenance be preserved by keying on `(source, code)` instead of `code` alone?
 - Does Celery in MDAdmin serve anything beyond the one legacy chain it's confirmed to run today ([`ARCHITECTURE_.md` section 2](ARCHITECTURE_.md#2-target-production-architecture)) — the one fact that would flip the orchestration recommendation toward Azure Container Apps Jobs instead?

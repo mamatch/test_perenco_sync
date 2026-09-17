@@ -45,7 +45,8 @@ curl -s http://localhost:8080/_admin/PERENCO/calls   # "writes" unchanged
 
 The default 10% archive-ratio threshold blocks every archive candidate on this small
 sandbox (this is the guardrail doing its job on a tenant two orders of magnitude smaller
-than production, not a bug). To see archives
+than production, not a bug -- see DECISIONS.md #7 for the global-vs-per-body scope this
+assumes). To see archives
 actually execute end to end: `ARCHIVE_RATIO_THRESHOLD=0.5 uv run python -m pipeline run mdm-to-cmms`.
 
 ## What is done
