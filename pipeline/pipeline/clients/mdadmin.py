@@ -3,7 +3,7 @@ command inside MDAdmin's own process (systemref_lite), instead of writing
 into MDM's tables directly from this service -- ARCHITECTURE_.md section
 2/11. Preserves any model-level validation/signals MDAdmin's ORM would
 otherwise bypass. In production this dispatch would be a Celery task handed
-to MDAdmin's own workers (DECISIONS.md #12); a subprocess call to `manage.py`
+to MDAdmin's own workers (DECISIONS.md #11); a subprocess call to `manage.py`
 is the sandbox-appropriate stand-in for "triggering execution inside
 MDAdmin's process" -- the actual boundary being demonstrated (writes happen
 through MDAdmin's ORM, never from outside it) is the same either way.
